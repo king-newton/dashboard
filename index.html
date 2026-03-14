@@ -8,62 +8,48 @@
     <style>
         body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; margin: 0; }
         .tabs { display: flex; margin-bottom: 20px; }
-        .tab-button { padding: 12px 24px; cursor: pointer; background: #ddd; border: none; font-size: 16px; flex: 1; transition: 0.3s; }
+        .tab-button { padding: 12px 24px; cursor: pointer; background: #ddd; border: none; font-size: 16px; flex: 1; }
         .tab-button.active { background: #3e5a26; color: white; }
-        .tab-content { display: none; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab-content { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .tab-content.active { display: block; }
         
-        .report-title { font-size: 28px; font-weight: bold; margin-bottom: 25px; text-align: center; color: #1a1a1a; white-space: nowrap; }
-        
-        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        td, th { border: 1px solid #ddd; padding: 12px; font-size: 16px; }
-        .label { background-color: #f9f9f9; color: #666; font-weight: bold; width: 30%; }
+        .report-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 10px; font-size: 14px; }
+        .label { background-color: #f9f9f9; font-weight: bold; width: 30%; }
         .value { text-align: right; font-family: "Consolas", monospace; }
         
-        /* 客戶明細統計表樣式 */
-        .stat-table th { background-color: #3e5a26; color: white; text-align: center; }
+        .stat-table th { background-color: #3e5a26; color: white; }
         .stat-table td { text-align: right; }
         .stat-table td:first-child { text-align: left; }
 
-        input { width: 90%; text-align: right; border: none; font-size: 16px; font-family: "Consolas", monospace; background: transparent; padding: 2px; }
-        
+        .footer-bar { background-color: #3e5a26; color: white; padding: 15px; text-align: center; border-radius: 5px; font-size: 15px; margin-bottom: 20px; }
+
         @media screen and (max-width: 600px) {
             body { padding: 10px; }
             .label, .value { display: block; width: 100%; text-align: left; }
             td { display: block; border: none; border-bottom: 1px solid #eee; }
             .stat-table td { display: table-cell; border: 1px solid #ddd; }
-            .stat-table th { font-size: 14px; padding: 8px; }
         }
     </style>
 </head>
 <body>
-
     <div class="tabs">
         <button class="tab-button active" onclick="openTab(event, 'DASHBOARD')">DASHBOARD</button>
         <button class="tab-button" onclick="openTab(event, 'DATA')">資料明細</button>
     </div>
 
     <div id="DASHBOARD" class="tab-content active">
-        <div class="report-title">2026 年度累計營收銷售分析報告</div>
-        
+        <div class="report-title">2026 年度累計營收銷售分析</div>
         <table id="main-table">
-            <tr><td class="label">日期時間</td><td class="value" id="current-date">--</td><td class="label">今日進度</td><td class="value" id="day-of-year">--</td></tr>
-            <tr>
-                <td class="label">每月目標</td><td class="value"><input type="text" id="monthly-target" value="7,500,000" onblur="formatCommas(this); fetchCSVData()"></td>
-                <td class="label">營收目標</td><td class="value" id="annual-target">NT$ 90,000,000</td>
-            </tr>
-            <tr><td class="label">銷貨合計</td><td class="value" id="total-sales">讀取中...</td><td class="label" id="diff-label">落後/超前</td><td class="value" id="progress-status">--</td></tr>
-            <tr><td class="label">利潤合計</td><td class="value" id="total-profit">讀取中...</td><td class="label">營業費用</td><td class="value"><input type="text" id="expense-input" value="3,460,401" onblur="formatCommas(this); fetchCSVData()"></td></tr>
+            <tr><td class="label">目前銷貨合計</td><td class="value" id="total-sales">計算中...</td><td class="label">利潤合計</td><td class="value" id="total-profit">計算中...</td></tr>
         </table>
-
-        <div class="report-title" style="font-size: 20px;">客戶別銷售分析</div>
+        <div class="footer-bar" id="summary-bar">達成率：--% | 毛利率：--% | 費用率：--%</div>
+        
+        <div class="report-title" style="font-size: 18px;">客戶別銷售分析</div>
         <table class="stat-table">
-            <thead>
-                <tr><th>客戶名稱</th><th>銷貨合計</th><th>利潤合計</th><th>毛利率</th></tr>
-            </thead>
-            <tbody id="client-stats-body">
-                <tr><td colspan="4">讀取中...</td></tr>
-            </tbody>
+            <thead><tr><th>客戶名稱</th><th>銷貨</th><th>利潤</th><th>毛利率</th></tr></thead>
+            <tbody id="client-stats-body"></tbody>
         </table>
     </div>
 
@@ -78,53 +64,35 @@
             Papa.parse(CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    let clientMap = {};
-                    let totalS = 0, totalP = 0;
-
+                    let clientMap = {}, totalS = 0, totalP = 0;
                     results.data.forEach(row => {
                         let name = row['客戶名稱'] || '未分類';
                         let s = parseFloat(row['本幣未稅金額']?.replace(/,/g, '')) || 0;
                         let p = parseFloat(row['毛利']?.replace(/,/g, '')) || 0;
-                        
                         if(!clientMap[name]) clientMap[name] = { s: 0, p: 0 };
-                        clientMap[name].s += s;
-                        clientMap[name].p += p;
+                        clientMap[name].s += s; clientMap[name].p += p;
                         totalS += s; totalP += p;
                     });
 
-                    // 更新總表
                     document.getElementById('total-sales').innerText = 'NT$ ' + Math.round(totalS).toLocaleString();
                     document.getElementById('total-profit').innerText = 'NT$ ' + Math.round(totalP).toLocaleString();
 
-                    // 排序並生成統計表
-                    let sortedClients = Object.keys(clientMap).map(n => ({
-                        name: n, s: clientMap[n].s, p: clientMap[n].p
-                    })).sort((a, b) => b.s - a.s);
-
+                    let sorted = Object.keys(clientMap).map(n => ({name: n, s: clientMap[n].s, p: clientMap[n].p})).sort((a, b) => b.s - a.s);
                     let html = '';
-                    sortedClients.forEach(c => {
-                        let margin = c.s > 0 ? (c.p / c.s * 100).toFixed(1) + '%' : '0%';
-                        html += `<tr><td>${c.name}</td><td>${Math.round(c.s).toLocaleString()}</td><td>${Math.round(c.p).toLocaleString()}</td><td>${margin}</td></tr>`;
+                    sorted.forEach(c => {
+                        let m = c.s > 0 ? (c.p / c.s * 100).toFixed(0) + '%' : '0%';
+                        html += `<tr><td>${c.name}</td><td>${Math.round(c.s).toLocaleString()}</td><td>${Math.round(c.p).toLocaleString()}</td><td>${m}</td></tr>`;
                     });
                     document.getElementById('client-stats-body').innerHTML = html;
                     
-                    updateLogic(totalS, totalP);
+                    // 恢復達成率計算 (假設年目標為 90,000,000)
+                    let annual = 90000000;
+                    let reach = (totalS / annual * 100).toFixed(1);
+                    let profitRate = (totalP / totalS * 100).toFixed(1);
+                    document.getElementById('summary-bar').innerText = `達成率：${reach}% | 毛利率：${profitRate}%`;
                 }
             });
         }
-
-        function updateLogic(s, p) {
-            let m = parseFloat(document.getElementById('monthly-target').value.replace(/,/g, '')) || 0;
-            let a = m * 12;
-            document.getElementById('annual-target').innerText = 'NT$ ' + a.toLocaleString();
-            let dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-            let diff = s - ((a / 365) * dayOfYear);
-            let progEl = document.getElementById('progress-status');
-            progEl.innerText = 'NT$ ' + Math.round(diff).toLocaleString();
-            progEl.className = diff >= 0 ? 'value highlight-green' : 'value highlight-red';
-        }
-
-        function formatCommas(i) { let v = parseFloat(i.value.replace(/,/g, '')); if(!isNaN(v)) i.value = v.toLocaleString(); }
         function openTab(e, n) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab-button').forEach(el => el.className = el.className.replace(" active", ""));
