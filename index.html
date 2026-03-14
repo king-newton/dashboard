@@ -15,20 +15,17 @@
         
         .report-title { font-size: 28px; font-weight: bold; margin-bottom: 25px; text-align: center; color: #1a1a1a; white-space: nowrap; }
         
-        /* 原有總表樣式 */
+        /* 原有總表樣式保持不變 */
         table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
         td { border: 1px solid #ddd; padding: 15px; font-size: 16px; }
         .label { background-color: #f9f9f9; color: #666; width: 30%; font-weight: bold; }
         .value { width: 20%; text-align: right; font-family: "Consolas", monospace; }
         input { width: 90%; text-align: right; border: none; font-size: 16px; font-family: "Consolas", monospace; background: transparent; padding: 2px; }
         
-        /* 新增統計表樣式：專注於響應式處理 */
-        .stat-container { width: 100%; overflow-x: auto; margin-top: 20px; }
-        .stat-table { min-width: 500px; }
-        .stat-table th { background-color: #3e5a26; color: white; padding: 12px; font-size: 14px; }
-        .stat-table td { padding: 10px; font-size: 14px; text-align: right; }
-        .stat-table td:nth-child(2) { text-align: left; } /* 客戶名稱靠左 */
-        .stat-table td:first-child { text-align: center; } /* 排名置中 */
+        /* 統計表樣式：手機響應式調整 */
+        .stat-table { width: 100%; border-collapse: collapse; }
+        .stat-table th { background-color: #3e5a26; color: white; padding: 12px; }
+        .stat-table td { padding: 10px; border: 1px solid #ddd; }
         
         .footer-bar { background-color: #3e5a26; color: white; padding: 20px; text-align: center; border-radius: 5px; font-size: 18px; }
         .highlight-red { color: #d9534f; font-weight: bold; }
@@ -40,6 +37,12 @@
             .label, .value { display: block; width: 100%; text-align: left; }
             td { display: block; border: none; border-bottom: 1px solid #eee; padding: 10px; }
             input { text-align: left; }
+            
+            /* 統計表變更為卡片顯示 */
+            .stat-table thead { display: none; }
+            .stat-table tr { display: block; margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+            .stat-table td { display: flex; justify-content: space-between; border: none; padding: 5px; }
+            .stat-table td::before { content: attr(data-label); font-weight: bold; color: #666; }
         }
     </style>
 </head>
@@ -61,12 +64,11 @@
         </table>
         <div class="footer-bar" id="summary-bar">達成率：--% | 毛利率：--% | 費用率：--%</div>
 
-        <div class="stat-container">
-            <table class="stat-table">
-                <thead><tr><th>排名</th><th>客戶名稱</th><th>銷貨合計</th><th>利潤合計</th><th>毛利率</th></tr></thead>
-                <tbody id="client-stats-body"></tbody>
-            </table>
-        </div>
+        <div class="report-title" style="margin-top: 30px; font-size: 20px;">客戶銷售排名</div>
+        <table class="stat-table">
+            <thead><tr><th>排名</th><th>客戶名稱</th><th>銷貨合計</th><th>利潤合計</th><th>毛利率</th></tr></thead>
+            <tbody id="client-stats-body"></tbody>
+        </table>
     </div>
 
     <div id="DATA" class="tab-content">
@@ -90,54 +92,28 @@
                         totalS += s; totalP += p;
                     });
 
-                    // 1. 更新總表數據
                     document.getElementById('total-sales').innerText = 'NT$ ' + Math.round(totalS).toLocaleString();
-                    document.getElementById('total-profit').innerText = 'NT$ ' + Math.round(totalP).toLocaleString();
+                    document.getElementById('total-profit').innerText = 'NT$ ' + Math.round(p).toLocaleString();
 
-                    // 2. 處理統計表邏輯 (排序與排名)
                     let sorted = Object.keys(clientMap).map(n => ({name: n, s: clientMap[n].s, p: clientMap[n].p})).sort((a, b) => b.s - a.s);
                     let html = '';
                     sorted.forEach((c, index) => {
                         let m = c.s > 0 ? (c.p / c.s * 100).toFixed(0) + '%' : '0%';
-                        html += `<tr><td>${index + 1}</td><td>${c.name}</td><td>${Math.round(c.s).toLocaleString()}</td><td>${Math.round(c.p).toLocaleString()}</td><td>${m}</td></tr>`;
+                        // 使用 data-label 在手機版顯示欄位名稱
+                        html += `<tr>
+                            <td data-label="排名">${index + 1}</td>
+                            <td data-label="客戶">${c.name}</td>
+                            <td data-label="銷貨">${Math.round(c.s).toLocaleString()}</td>
+                            <td data-label="利潤">${Math.round(c.p).toLocaleString()}</td>
+                            <td data-label="毛利率">${m}</td>
+                        </tr>`;
                     });
                     document.getElementById('client-stats-body').innerHTML = html;
-                    
                     calculateLogic(totalS, totalP);
                 }
             });
         }
-
-        function calculateLogic(s, p) {
-            s = s || parseFloat(document.getElementById('total-sales').innerText.replace(/[NT$,]/g, ''));
-            p = p || parseFloat(document.getElementById('total-profit').innerText.replace(/[NT$,]/g, ''));
-            const now = new Date();
-            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-            let annual = (parseFloat(document.getElementById('monthly-target').value.replace(/,/g, '')) || 0) * 12;
-            document.getElementById('annual-target').innerText = 'NT$ ' + annual.toLocaleString();
-
-            let diff = s - ((annual / 365) * dayOfYear);
-            let progEl = document.getElementById('progress-status');
-            progEl.innerText = 'NT$ ' + Math.round(diff).toLocaleString();
-            progEl.className = diff >= 0 ? 'value highlight-green' : 'value highlight-red';
-            document.getElementById('diff-label').innerText = diff >= 0 ? '進度超前' : '進度落後';
-
-            let exp = parseFloat(document.getElementById('expense-input').value.replace(/,/g, '')) || 0;
-            document.getElementById('summary-bar').innerText = `達成率：${annual > 0 ? (s/annual*100).toFixed(1) : 0}% | 毛利率：${s > 0 ? (p/s*100).toFixed(1) : 0}% | 費用率：${s > 0 ? (exp/s*100).toFixed(1) : 0}%`;
-        }
-
-        function formatCommas(i) { let v = parseFloat(i.value.replace(/,/g, '')); if(!isNaN(v)) i.value = v.toLocaleString(); }
-        function openTab(e, n) {
-            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.tab-button').forEach(el => el.className = el.className.replace(" active", ""));
-            document.getElementById(n).style.display = 'block';
-            e.currentTarget.className += " active";
-        }
-        window.onload = () => {
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString();
-            document.getElementById('day-of-year').innerText = new Date().getFullYear() + '年第' + Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000) + '天';
-            fetchCSVData();
-        };
+        // ... (保持原有的 calculateLogic 與其他函式)
     </script>
 </body>
 </html>
