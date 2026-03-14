@@ -6,44 +6,46 @@
     <title>金牛頓 2026 營運分析儀表板</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        body { font-family: "Microsoft JhengHei", sans-serif; padding: 10px; background-color: #f4f4f4; color: #333; margin: 0; }
+        body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; margin: 0; }
         
-        .tabs { display: flex; margin-bottom: 15px; }
-        .tab-button { padding: 12px 10px; cursor: pointer; background: #ddd; border: none; font-size: 15px; flex: 1; transition: 0.3s; }
+        .tabs { display: flex; margin-bottom: 20px; }
+        .tab-button { padding: 12px 24px; cursor: pointer; background: #ddd; border: none; font-size: 16px; flex: 1; transition: 0.3s; }
         .tab-button.active { background: #3e5a26; color: white; }
-        .tab-content { display: none; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tab-content { display: none; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .tab-content.active { display: block; }
         
-        /* 強制表頭不換行 */
         .report-title { 
-            font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #1a1a1a; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-size: 28px; font-weight: bold; margin-bottom: 25px; text-align: center; color: #1a1a1a; 
+            white-space: nowrap;
         }
         
         table { width: 100%; border-collapse: collapse; }
-        td { border: 1px solid #ddd; padding: 12px; font-size: 15px; }
-        .label { background-color: #f9f9f9; color: #555; font-weight: bold; }
-        .value { text-align: right; font-family: "Consolas", monospace; }
+        td { border: 1px solid #ddd; padding: 15px; font-size: 16px; }
+        .label { background-color: #f9f9f9; color: #666; width: 30%; font-weight: bold; }
+        .value { width: 20%; text-align: right; font-family: "Consolas", monospace; }
         
-        /* 手機版統一靠左 */
-        @media screen and (max-width: 600px) {
-            .label, .value { display: block; width: 100%; text-align: left; border: none; padding-bottom: 0; }
-            td { display: block; border: none; border-bottom: 1px solid #eee; }
-            .value { padding-top: 2px; padding-bottom: 15px; color: #333; font-weight: bold; }
-        }
-
         input { 
-            width: 100%; text-align: left; border: none; font-size: 15px; 
-            font-family: "Consolas", monospace; background: transparent; padding: 0;
+            width: 90%; text-align: right; border: none; font-size: 16px; 
+            font-family: "Consolas", monospace; background: transparent; padding: 2px;
         }
-        input:focus { outline: none; background: #fff; }
+        input:focus { outline: 1px solid #3e5a26; background: #fff; }
 
         .footer-bar { 
-            background-color: #3e5a26; color: white; padding: 15px; 
-            text-align: center; margin-top: 20px; border-radius: 5px; font-size: 14px; line-height: 1.6;
+            background-color: #3e5a26; color: white; padding: 20px; 
+            text-align: center; margin-top: 30px; border-radius: 5px; font-size: 18px;
         }
-        .highlight-red { color: #d9534f; }
-        .highlight-green { color: #28a745; }
+        .highlight-red { color: #d9534f; font-weight: bold; }
+        .highlight-green { color: #28a745; font-weight: bold; }
+
+        /* 手機響應式修正：僅在窄螢幕啟動 */
+        @media screen and (max-width: 600px) {
+            body { padding: 10px; }
+            .report-title { font-size: 20px; }
+            .label, .value { display: block; width: 100%; text-align: left; }
+            td { display: block; border: none; border-bottom: 1px solid #eee; padding: 10px; }
+            input { text-align: left; }
+            .value { font-weight: bold; }
+        }
     </style>
 </head>
 <body>
@@ -57,17 +59,21 @@
         <div class="report-title">2026 年度累計營收銷售分析報告</div>
         
         <table>
-            <tr><td class="label">日期時間</td><td class="value" id="current-date">--</td></tr>
-            <tr><td class="label">今日進度</td><td class="value" id="day-of-year">--</td></tr>
+            <tr>
+                <td class="label">日期時間</td><td class="value" id="current-date">--</td>
+                <td class="label">今日進度</td><td class="value" id="day-of-year">--</td>
+            </tr>
             <tr>
                 <td class="label">2026年每月目標</td>
                 <td class="value"><input type="text" id="monthly-target" value="7,500,000" onfocus="this.value=this.value.replace(/,/g,'')" onblur="formatCommas(this); calculateLogic()"></td>
+                <td class="label">2026年營收目標</td><td class="value" id="annual-target">NT$ 90,000,000</td>
             </tr>
-            <tr><td class="label">2026年營收目標</td><td class="value" id="annual-target">NT$ 90,000,000</td></tr>
-            <tr><td class="label">目前銷貨合計</td><td class="value" id="total-sales">讀取中...</td></tr>
-            <tr><td class="label" id="diff-label">進度落後/超前</td><td class="value" id="progress-status">計算中...</td></tr>
-            <tr><td class="label">目前銷貨利潤合計</td><td class="value" id="total-profit">讀取中...</td></tr>
             <tr>
+                <td class="label">目前銷貨合計</td><td class="value" id="total-sales">讀取中...</td>
+                <td class="label" id="diff-label">進度落後/超前</td><td class="value" id="progress-status">計算中...</td>
+            </tr>
+            <tr>
+                <td class="label">目前銷貨利潤合計</td><td class="value" id="total-profit">讀取中...</td>
                 <td class="label">營業費用總計</td>
                 <td class="value"><input type="text" id="expense-input" value="3,460,401" onfocus="this.value=this.value.replace(/,/g,'')" onblur="formatCommas(this); calculateLogic()"></td>
             </tr>
