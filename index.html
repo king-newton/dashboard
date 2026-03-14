@@ -7,56 +7,96 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; margin: 0; }
+        
         .tabs { display: flex; margin-bottom: 20px; }
         .tab-button { padding: 12px 24px; cursor: pointer; background: #ddd; border: none; font-size: 16px; flex: 1; transition: 0.3s; }
         .tab-button.active { background: #3e5a26; color: white; }
         .tab-content { display: none; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .tab-content.active { display: block; }
         
-        .report-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; text-align: center; }
+        .report-title { font-size: 28px; font-weight: bold; margin-bottom: 25px; text-align: center; color: #1a1a1a; white-space: nowrap; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        td { border: 1px solid #ddd; padding: 12px; font-size: 14px; }
+        td, th { border: 1px solid #ddd; padding: 15px; font-size: 16px; }
         .label { background-color: #f9f9f9; color: #666; width: 30%; font-weight: bold; }
-        .value { text-align: right; font-family: "Consolas", monospace; }
+        .value { width: 20%; text-align: right; font-family: "Consolas", monospace; }
         
-        .stat-table th { background-color: #3e5a26; color: white; padding: 8px; font-size: 13px; }
-        .stat-table td { padding: 8px; font-size: 13px; text-align: right; }
+        /* 新增統計區塊樣式 */
+        .stats-header { background: #3e5a26; color: white; font-weight: bold; text-align: center; }
         
-        input { width: 90%; text-align: right; border: none; font-size: 14px; font-family: "Consolas", monospace; background: transparent; }
-        .footer-bar { background-color: #3e5a26; color: white; padding: 15px; text-align: center; border-radius: 5px; font-size: 16px; margin-bottom: 20px; }
+        input { width: 90%; text-align: right; border: none; font-size: 16px; font-family: "Consolas", monospace; background: transparent; padding: 2px; }
+        input:focus { outline: 1px solid #3e5a26; background: #fff; }
+
+        .footer-bar { background-color: #3e5a26; color: white; padding: 20px; text-align: center; margin-top: 30px; border-radius: 5px; font-size: 18px; }
+        .highlight-red { color: #d9534f; font-weight: bold; }
+        .highlight-green { color: #28a745; font-weight: bold; }
 
         @media screen and (max-width: 600px) {
+            body { padding: 10px; }
+            .report-title { font-size: 20px; }
             .label, .value { display: block; width: 100%; text-align: left; }
-            td { display: block; border: none; border-bottom: 1px solid #eee; }
-            .stat-table th, .stat-table td { display: table-cell; font-size: 11px; padding: 4px; }
+            td { display: block; border: none; border-bottom: 1px solid #eee; padding: 10px; }
+            input { text-align: left; }
+            .stats-table thead { display: none; }
+            .stats-table tr { display: block; margin-bottom: 10px; border: 1px solid #ddd; }
+            .stats-table td { display: flex; justify-content: space-between; }
+            .stats-table td::before { content: attr(data-label); font-weight: bold; }
         }
     </style>
 </head>
 <body>
+
     <div class="tabs">
         <button class="tab-button active" onclick="openTab(event, 'DASHBOARD')">DASHBOARD</button>
         <button class="tab-button" onclick="openTab(event, 'DATA')">資料明細</button>
     </div>
 
     <div id="DASHBOARD" class="tab-content active">
-        <div class="report-title">2026 年度累計營收分析</div>
+        <div class="report-title">2026 年度累計營收銷售分析報告</div>
+        
         <table>
-            <tr><td class="label">日期</td><td class="value" id="current-date">--</td><td class="label">年度進度</td><td class="value" id="progress-day">--</td></tr>
-            <tr><td class="label">每月目標</td><td class="value"><input type="text" id="monthly-target" value="7,000,000" onblur="formatCommas(this); fetchCSVData()"></td><td class="label">營收目標</td><td class="value" id="annual-target">--</td></tr>
-            <tr><td class="label">銷貨合計</td><td class="value" id="total-sales">--</td><td class="label">利潤合計</td><td class="value" id="total-profit">--</td></tr>
-            <tr><td class="label">營業費用</td><td class="value"><input type="text" id="expense-input" value="3,460,417" onblur="formatCommas(this); fetchCSVData()"></td><td colspan="2"></td></tr>
+            <tr>
+                <td class="label">日期時間</td><td class="value" id="current-date">--</td>
+                <td class="label">今日進度</td><td class="value" id="day-of-year">--</td>
+            </tr>
+            <tr>
+                <td class="label">2026年每月目標</td>
+                <td class="value"><input type="text" id="monthly-target" value="7,500,000" onfocus="this.value=this.value.replace(/,/g,'')" onblur="formatCommas(this); calculateLogic()"></td>
+                <td class="label">2026年營收目標</td><td class="value" id="annual-target">NT$ 90,000,000</td>
+            </tr>
+            <tr>
+                <td class="label">目前銷貨合計</td><td class="value" id="total-sales">讀取中...</td>
+                <td class="label" id="diff-label">進度落後/超前</td><td class="value" id="progress-status">計算中...</td>
+            </tr>
+            <tr>
+                <td class="label">目前銷貨利潤合計</td><td class="value" id="total-profit">讀取中...</td>
+                <td class="label">營業費用總計</td>
+                <td class="value"><input type="text" id="expense-input" value="3,460,401" onfocus="this.value=this.value.replace(/,/g,'')" onblur="formatCommas(this); calculateLogic()"></td>
+            </tr>
         </table>
-        <div class="footer-bar" id="summary-bar">計算中...</div>
 
-        <div class="report-title" style="font-size: 18px; margin-top: 20px;">客戶銷售排名</div>
-        <table class="stat-table">
-            <thead><tr><th>排名</th><th>客戶名稱</th><th>銷貨</th><th>利潤</th><th>毛利%</th></tr></thead>
-            <tbody id="client-stats-body"></tbody>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th class="stats-header">客戶名稱</th>
+                    <th class="stats-header">銷貨合計</th>
+                    <th class="stats-header">利潤合計</th>
+                    <th class="stats-header">毛利率</th>
+                    <th class="stats-header">排名</th>
+                </tr>
+            </thead>
+            <tbody id="customer-stats-body">
+                </tbody>
         </table>
+
+        <div class="footer-bar" id="summary-bar">
+            達成率：--% | 毛利率：--% | 費用率：--%
+        </div>
     </div>
 
-    <div id="DATA" class="tab-content"><iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pubhtml?widget=true&amp;headers=false" style="width:100%; height:700px; border:none;"></iframe></div>
+    <div id="DATA" class="tab-content">
+        <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pubhtml?widget=true&amp;headers=false" style="width:100%; height:700px; border:none;"></iframe>
+    </div>
 
     <script>
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pub?gid=0&single=true&output=csv";
@@ -65,27 +105,65 @@
             Papa.parse(CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    let clientMap = {}, sAll = 0, pAll = 0;
-                    results.data.forEach(r => {
-                        let n = r['客戶名稱'] || '未分類', s = parseFloat(r['本幣未稅金額']?.replace(/,/g,'')) || 0, p = parseFloat(r['毛利']?.replace(/,/g,'')) || 0;
-                        if(!clientMap[n]) clientMap[n] = {s:0, p:0};
-                        clientMap[n].s += s; clientMap[n].p += p;
-                        sAll += s; pAll += p;
+                    const data = results.data;
+                    let sTotal = 0, pTotal = 0;
+                    let custMap = {};
+
+                    data.forEach(row => {
+                        let s = parseFloat(row['本幣未稅金額']?.toString().replace(/,/g, '')) || 0;
+                        let p = parseFloat(row['毛利']?.toString().replace(/,/g, '')) || 0;
+                        let name = row['客戶名稱'] || '未分類';
+                        sTotal += s; pTotal += p;
+                        
+                        if(!custMap[name]) custMap[name] = { s: 0, p: 0 };
+                        custMap[name].s += s; custMap[name].p += p;
                     });
-                    
-                    document.getElementById('total-sales').innerText = Math.round(sAll).toLocaleString();
-                    document.getElementById('total-profit').innerText = Math.round(pAll).toLocaleString();
-                    
-                    let sorted = Object.keys(clientMap).map(n => ({name: n, ...clientMap[n]})).sort((a,b) => b.s - a.s);
-                    document.getElementById('client-stats-body').innerHTML = sorted.map((c, i) => `<tr><td>${i+1}</td><td>${c.name}</td><td>${Math.round(c.s/1000)}k</td><td>${Math.round(c.p/1000)}k</td><td>${c.s>0?Math.round(c.p/c.s*100)+'%':'0%'}</td></tr>`).join('');
-                    
-                    let target = parseFloat(document.getElementById('monthly-target').value.replace(/,/g,'')) * 12;
-                    let exp = parseFloat(document.getElementById('expense-input').value.replace(/,/g,''));
-                    document.getElementById('annual-target').innerText = Math.round(target).toLocaleString();
-                    document.getElementById('summary-bar').innerText = `達成率：${(sAll/target*100).toFixed(1)}% | 毛利率：${sAll>0?Math.round(pAll/sAll*100):0}% | 費用率：${sAll>0?Math.round(exp/sAll*100):0}%`;
+
+                    // 處理客戶統計
+                    let custArray = Object.keys(custMap).map(k => ({
+                        name: k, ...custMap[k]
+                    })).sort((a, b) => b.s - a.s);
+
+                    let body = document.getElementById('customer-stats-body');
+                    body.innerHTML = '';
+                    custArray.forEach((c, i) => {
+                        let margin = c.s > 0 ? (c.p / c.s * 100).toFixed(1) : 0;
+                        body.innerHTML += `<tr>
+                            <td data-label="客戶名稱">${c.name}</td>
+                            <td data-label="銷貨合計">${Math.round(c.s).toLocaleString()}</td>
+                            <td data-label="利潤合計">${Math.round(c.p).toLocaleString()}</td>
+                            <td data-label="毛利率">${margin}%</td>
+                            <td data-label="排名">${i + 1}</td>
+                        </tr>`;
+                    });
+
+                    document.getElementById('total-sales').innerText = 'NT$ ' + Math.round(sTotal).toLocaleString();
+                    document.getElementById('total-profit').innerText = 'NT$ ' + Math.round(pTotal).toLocaleString();
+                    calculateLogic(sTotal, pTotal);
                 }
             });
         }
+
+        function calculateLogic(s, p) {
+            if(s === undefined) { s = parseFloat(document.getElementById('total-sales').innerText.replace(/[NT$,]/g, '')); }
+            if(p === undefined) { p = parseFloat(document.getElementById('total-profit').innerText.replace(/[NT$,]/g, '')); }
+            
+            const now = new Date();
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+            let monthly = parseFloat(document.getElementById('monthly-target').value.replace(/,/g, '')) || 0;
+            let annual = monthly * 12;
+            document.getElementById('annual-target').innerText = 'NT$ ' + annual.toLocaleString();
+
+            let diff = s - ((annual / 365) * dayOfYear);
+            let progEl = document.getElementById('progress-status');
+            progEl.innerText = 'NT$ ' + Math.round(diff).toLocaleString();
+            progEl.className = diff >= 0 ? 'value highlight-green' : 'value highlight-red';
+            document.getElementById('diff-label').innerText = diff >= 0 ? '進度超前' : '進度落後';
+
+            let exp = parseFloat(document.getElementById('expense-input').value.replace(/,/g, '')) || 0;
+            document.getElementById('summary-bar').innerText = `達成率：${annual > 0 ? (s/annual*100).toFixed(1) : 0}% | 毛利率：${s > 0 ? (p/s*100).toFixed(1) : 0}% | 費用率：${s > 0 ? (exp/s*100).toFixed(1) : 0}%`;
+        }
+
         function formatCommas(i) { let v = parseFloat(i.value.replace(/,/g, '')); if(!isNaN(v)) i.value = v.toLocaleString(); }
         function openTab(e, n) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
@@ -93,10 +171,10 @@
             document.getElementById(n).style.display = 'block';
             e.currentTarget.className += " active";
         }
+
         window.onload = () => {
-            const now = new Date();
-            document.getElementById('current-date').innerText = now.getMonth()+1 + '/' + now.getDate();
-            document.getElementById('progress-day').innerText = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000) + ' 天';
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('day-of-year').innerText = new Date().getFullYear() + '年第' + Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000) + '天';
             fetchCSVData();
         };
     </script>
