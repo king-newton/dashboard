@@ -94,69 +94,38 @@
         let dataSales = 0;
         let dataProfit = 0;
 
-        // 1. 初始化日期
-        function initDateTime() {
-            const now = new Date();
-            const dateStr = now.getFullYear() + '/' + (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getDate().toString().padStart(2, '0');
-            document.getElementById('current-date').innerText = dateStr;
-
-            const start = new Date(now.getFullYear(), 0, 0);
-            const diff = now - start;
-            const oneDay = 1000 * 60 * 60 * 24;
-            const dayOfYear = Math.floor(diff / oneDay);
-            document.getElementById('day-of-year').innerText = now.getFullYear() + '年第' + dayOfYear + '天';
-            return dayOfYear;
-        }
-
-        // 2. 抓取 CSV 資料
         function fetchCSVData() {
             Papa.parse(CSV_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
+                download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
-                    dataSales = results.data.reduce((sum, row) => {
-                        let val = parseFloat(row['本幣未稅金額']?.toString().replace(/,/g, ''));
-                        return sum + (isNaN(val) ? 0 : val);
-                    }, 0);
+                    dataSales = results.data.reduce((sum, row) => sum + (parseFloat(row['本幣未稅金額']?.toString().replace(/,/g, '')) || 0), 0);
+                    dataProfit = results.data.reduce((sum, row) => sum + (parseFloat(row['毛利']?.toString().replace(/,/g, '')) || 0), 0);
 
-                    dataProfit = results.data.reduce((sum, row) => {
-                        let val = parseFloat(row['毛利']?.toString().replace(/,/g, ''));
-                        return sum + (isNaN(val) ? 0 : val);
-                    }, 0);
-
-                    document.getElementById('total-sales').innerText = 'NT$ ' + dataSales.toLocaleString();
-                    document.getElementById('total-profit').innerText = 'NT$ ' + dataProfit.toLocaleString();
+                    // 確保數值轉為整數後顯示
+                    document.getElementById('total-sales').innerText = 'NT$ ' + Math.round(dataSales).toLocaleString();
+                    document.getElementById('total-profit').innerText = 'NT$ ' + Math.round(dataProfit).toLocaleString();
                     calculateLogic();
                 }
             });
         }
 
-        // 3. 核心計算邏輯
         function calculateLogic() {
-            const dayOfYear = initDateTime();
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
             
-            // 取得每月目標與年度目標
             let monthly = parseFloat(document.getElementById('monthly-target').value.replace(/,/g, '')) || 0;
             let annual = monthly * 12;
             document.getElementById('annual-target').innerText = 'NT$ ' + annual.toLocaleString();
 
-            // 計算截至今日的「目標業績」
             let targetToDate = (annual / 365) * dayOfYear;
             let diff = dataSales - targetToDate;
 
-            // 顯示進度落後/超前
             let progEl = document.getElementById('progress-status');
             progEl.innerText = 'NT$ ' + Math.round(diff).toLocaleString();
-            if (diff >= 0) {
-                progEl.className = 'value highlight-green';
-                document.getElementById('diff-label').innerText = '進度超前';
-            } else {
-                progEl.className = 'value highlight-red';
-                document.getElementById('diff-label').innerText = '進度落後';
-            }
+            progEl.className = diff >= 0 ? 'value highlight-green' : 'value highlight-red';
+            document.getElementById('diff-label').innerText = diff >= 0 ? '進度超前' : '進度落後';
 
-            // 計算底部 Bar 的百分比
             let expense = parseFloat(document.getElementById('expense-input').value.replace(/,/g, '')) || 0;
             let reachRate = annual > 0 ? ((dataSales / annual) * 100).toFixed(1) : 0;
             let profitRate = dataSales > 0 ? ((dataProfit / dataSales) * 100).toFixed(1) : 0;
@@ -166,7 +135,6 @@
                 `目前業績達成率：${reachRate}% | 毛利率：${profitRate}% | 營業費用率：${expenseRate}%`;
         }
 
-        // 輔助函式
         function formatCommas(input) {
             let val = parseFloat(input.value.replace(/,/g, ''));
             if (!isNaN(val)) input.value = val.toLocaleString();
@@ -179,9 +147,10 @@
             evt.currentTarget.className += " active";
         }
 
-        // 啟動
         window.onload = function() {
-            initDateTime();
+            const now = new Date();
+            document.getElementById('current-date').innerText = now.getFullYear() + '/' + (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getDate().toString().padStart(2, '0');
+            document.getElementById('day-of-year').innerText = now.getFullYear() + '年第' + Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000) + '天';
             fetchCSVData();
         };
     </script>
