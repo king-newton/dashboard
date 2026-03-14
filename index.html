@@ -21,10 +21,10 @@
         .label { background-color: #f9f9f9; color: #666; width: 30%; font-weight: bold; }
         .value { width: 20%; text-align: right; font-family: "Consolas", monospace; }
         
-        /* 整合後的摘要列樣式 */
         .summary-row { background-color: #3e5a26; color: white; text-align: center; font-weight: bold; }
         
         .stats-header { background: #3e5a26; color: white; font-weight: bold; text-align: center; }
+        .top-20-highlight { background-color: #f0f7ef !important; }
         
         input { width: 90%; text-align: right; border: none; font-size: 16px; font-family: "Consolas", monospace; background: transparent; padding: 2px; }
         input:focus { outline: 1px solid #3e5a26; background: #fff; }
@@ -100,7 +100,6 @@
     </div>
 
     <script>
-        // JS 邏輯保持不變，確保數據更新與排版正確
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pub?gid=0&single=true&output=csv";
         
         function fetchCSVData() {
@@ -126,12 +125,14 @@
                     body.innerHTML = '';
                     custArray.forEach((c, i) => {
                         let margin = c.s > 0 ? (c.p / c.s * 100).toFixed(1) : 0;
-                        body.innerHTML += `<tr>
+                        let rank = i + 1;
+                        let rowClass = rank <= 20 ? 'top-20-highlight' : '';
+                        body.innerHTML += `<tr class="${rowClass}">
                             <td data-label="客戶名稱">${c.name}</td>
                             <td data-label="銷貨合計">${Math.round(c.s).toLocaleString()}</td>
                             <td data-label="利潤合計">${Math.round(c.p).toLocaleString()}</td>
                             <td data-label="毛利率">${margin}%</td>
-                            <td data-label="排名">${i + 1}</td>
+                            <td data-label="排名">${rank}</td>
                         </tr>`;
                     });
 
