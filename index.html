@@ -13,24 +13,24 @@
         .tab-content { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .tab-content.active { display: block; }
         
-        .report-title { font-size: 22px; font-weight: bold; margin-bottom: 15px; text-align: center; }
+        .report-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; text-align: center; }
         
-        /* 表格區塊 */
-        .table-container { width: 100%; overflow-x: auto; margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; min-width: 400px; }
-        th, td { border: 1px solid #ddd; padding: 10px; font-size: 14px; }
+        /* 表格容器，處理手機滾動 */
+        .table-container { width: 100%; overflow-x: auto; margin-bottom: 25px; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        td, th { border: 1px solid #ddd; padding: 12px; font-size: 15px; }
         
-        /* 總表樣式 */
-        .main-table .label { background-color: #f9f9f9; font-weight: bold; width: 30%; }
-        .main-table .value { text-align: right; font-family: "Consolas", monospace; }
+        /* 總表專用樣式 */
+        .main-table .label { background-color: #f9f9f9; font-weight: bold; width: 25%; }
+        .main-table .value { width: 25%; text-align: right; font-family: "Consolas", monospace; }
         
-        /* 排名表樣式 */
-        .stat-table th { background-color: #3e5a26; color: white; }
+        /* 統計表專用樣式 */
+        .stat-table th { background-color: #3e5a26; color: white; text-align: center; }
         .stat-table td { text-align: right; }
-        .stat-table td:nth-child(2) { text-align: left; } /* 客戶名稱靠左 */
-        .stat-table td:first-child { text-align: center; } /* 排名置中 */
+        .stat-table td:nth-child(2) { text-align: left; }
+        .stat-table td:first-child { text-align: center; }
         
-        .footer-bar { background-color: #3e5a26; color: white; padding: 15px; text-align: center; border-radius: 5px; margin-bottom: 20px; }
+        .footer-bar { background-color: #3e5a26; color: white; padding: 15px; text-align: center; border-radius: 5px; font-size: 15px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -40,12 +40,13 @@
     </div>
 
     <div id="DASHBOARD" class="tab-content active">
-        <div class="report-title">2026 年度營運總覽</div>
+        <div class="report-title">2026 年度營運分析報表</div>
         
         <div class="table-container">
             <table class="main-table">
-                <tr><td class="label">目前銷貨合計</td><td class="value" id="total-sales">計算中...</td></tr>
-                <tr><td class="label">利潤合計</td><td class="value" id="total-profit">計算中...</td></tr>
+                <tr><td class="label">日期時間</td><td class="value" id="current-date">--</td><td class="label">今日進度</td><td class="value" id="day-of-year">--</td></tr>
+                <tr><td class="label">每月目標</td><td class="value" id="monthly-target-display">7,500,000</td><td class="label">營收目標</td><td class="value" id="annual-target">90,000,000</td></tr>
+                <tr><td class="label">銷貨合計</td><td class="value" id="total-sales">--</td><td class="label">利潤合計</td><td class="value" id="total-profit">--</td></tr>
             </table>
         </div>
         
@@ -83,6 +84,8 @@
 
                     document.getElementById('total-sales').innerText = 'NT$ ' + Math.round(totalS).toLocaleString();
                     document.getElementById('total-profit').innerText = 'NT$ ' + Math.round(totalP).toLocaleString();
+                    document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+                    document.getElementById('day-of-year').innerText = '第 ' + Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000) + ' 天';
 
                     let sorted = Object.keys(clientMap).map(n => ({name: n, s: clientMap[n].s, p: clientMap[n].p})).sort((a, b) => b.s - a.s);
                     let html = '';
