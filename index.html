@@ -16,18 +16,19 @@
         
         .report-title { font-size: 28px; font-weight: bold; margin-bottom: 25px; text-align: center; color: #1a1a1a; white-space: nowrap; }
         
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
         td, th { border: 1px solid #ddd; padding: 15px; font-size: 16px; }
         .label { background-color: #f9f9f9; color: #666; width: 30%; font-weight: bold; }
         .value { width: 20%; text-align: right; font-family: "Consolas", monospace; }
         
-        /* 新增統計區塊樣式 */
+        /* 整合後的摘要列樣式 */
+        .summary-row { background-color: #3e5a26; color: white; text-align: center; font-weight: bold; }
+        
         .stats-header { background: #3e5a26; color: white; font-weight: bold; text-align: center; }
         
         input { width: 90%; text-align: right; border: none; font-size: 16px; font-family: "Consolas", monospace; background: transparent; padding: 2px; }
         input:focus { outline: 1px solid #3e5a26; background: #fff; }
 
-        .footer-bar { background-color: #3e5a26; color: white; padding: 20px; text-align: center; margin-top: 30px; border-radius: 5px; font-size: 18px; }
         .highlight-red { color: #d9534f; font-weight: bold; }
         .highlight-green { color: #28a745; font-weight: bold; }
 
@@ -73,7 +74,12 @@
                 <td class="label">營業費用總計</td>
                 <td class="value"><input type="text" id="expense-input" value="3,460,401" onfocus="this.value=this.value.replace(/,/g,'')" onblur="formatCommas(this); calculateLogic()"></td>
             </tr>
+            <tr>
+                <td colspan="4" class="summary-row" id="summary-bar">達成率：--% | 毛利率：--% | 費用率：--%</td>
+            </tr>
         </table>
+
+        <div style="margin-top: 30px;"></div>
 
         <table class="stats-table">
             <thead>
@@ -85,13 +91,8 @@
                     <th class="stats-header">排名</th>
                 </tr>
             </thead>
-            <tbody id="customer-stats-body">
-                </tbody>
+            <tbody id="customer-stats-body"></tbody>
         </table>
-
-        <div class="footer-bar" id="summary-bar">
-            達成率：--% | 毛利率：--% | 費用率：--%
-        </div>
     </div>
 
     <div id="DATA" class="tab-content">
@@ -99,6 +100,7 @@
     </div>
 
     <script>
+        // JS 邏輯保持不變，確保數據更新與排版正確
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pub?gid=0&single=true&output=csv";
         
         function fetchCSVData() {
@@ -114,15 +116,11 @@
                         let p = parseFloat(row['毛利']?.toString().replace(/,/g, '')) || 0;
                         let name = row['客戶名稱'] || '未分類';
                         sTotal += s; pTotal += p;
-                        
                         if(!custMap[name]) custMap[name] = { s: 0, p: 0 };
                         custMap[name].s += s; custMap[name].p += p;
                     });
 
-                    // 處理客戶統計
-                    let custArray = Object.keys(custMap).map(k => ({
-                        name: k, ...custMap[k]
-                    })).sort((a, b) => b.s - a.s);
+                    let custArray = Object.keys(custMap).map(k => ({ name: k, ...custMap[k] })).sort((a, b) => b.s - a.s);
 
                     let body = document.getElementById('customer-stats-body');
                     body.innerHTML = '';
