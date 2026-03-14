@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>金牛頓 2026 營運分析儀表板</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .tabs { display: flex; margin-bottom: 20px; }
+        .tab-button { padding: 12px 24px; cursor: pointer; background: #ddd; border: none; outline: none; margin-right: 5px; font-size: 16px; transition: 0.3s; }
+        .tab-button.active { background: #3e5a26; color: white; }
+        .tab-content { display: none; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab-content.active { display: block; }
+        
+        .report-title { font-size: 28px; font-weight: bold; margin-bottom: 25px; text-align: center; color: #1a1a1a; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td { border: 1px solid #ddd; padding: 15px; font-size: 16px; }
+        .label { background-color: #f9f9f9; width: 25%; color: #666; }
+        .value { width: 25%; text-align: right; font-family: "Consolas", monospace; }
+        
+        input { 
+            width: 90%; text-align: right; border: none; font-size: 16px; 
+            font-family: "Consolas", monospace; background: transparent; padding: 2px;
+        }
+        input:focus { outline: 1px solid #3e5a26; background: #fff; }
+
+        .footer-bar { 
+            background-color: #3e5a26; color: white; padding: 20px; 
+            text-align: center; margin-top: 30px; border-radius: 5px; font-size: 18px;
+        }
+        .highlight-red { color: #d9534f; font-weight: bold; }
+        .highlight-green { color: #5cb85c; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event, 'DASHBOARD')">DASHBOARD</button>
+        <button class="tab-button" onclick="openTab(event, 'DATA')">資料明細</button>
+    </div>
+
+    <div id="DASHBOARD" class="tab-content active">
+        <div class="report-title">2026 年度累計營收銷售分析報告</div>
+        
+        <table>
+            <tr>
+                <td class="label">日期時間</td>
+                <td class="value" id="current-date">--</td>
+                <td class="label">今日進度</td>
+                <td class="value" id="day-of-year">--</td>
+            </tr>
+            <tr>
+                <td class="label">2026年每月目標</td>
+                <td class="value">
+                    <input type="text" id="monthly-target" value="7,500,000" 
+                           onfocus="this.value=this.value.replace(/,/g,'')" 
+                           onblur="formatCommas(this); calculateLogic()">
+                </td>
+                <td class="label">2026年營收目標</td>
+                <td class="value" id="annual-target">NT$ 90,000,000</td>
+            </tr>
+            <tr>
+                <td class="label">目前銷貨合計</td>
+                <td class="value" id="total-sales">讀取中...</td>
+                <td class="label" id="diff-label">進度落後/超前</td>
+                <td class="value" id="progress-status">計算中...</td>
+            </tr>
+            <tr>
+                <td class="label">目前銷貨利潤合計</td>
+                <td class="value" id="total-profit">讀取中...</td>
+                <td class="label">營業費用總計(手動)</td>
+                <td class="value">
+                    <input type="text" id="expense-input" value="3,460,401" 
+                           onfocus="this.value=this.value.replace(/,/g,'')" 
+                           onblur="formatCommas(this); calculateLogic()">
+                </td>
+            </tr>
+        </table>
+
+        <div class="footer-bar" id="summary-bar">
+            目前業績達成率：--% | 毛利率：--% | 營業費用率：--%
+        </div>
+    </div>
+
+    <div id="DATA" class="tab-content">
+        <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pubhtml?widget=true&amp;headers=false" 
+                style="width:100%; height:700px; border:none;"></iframe>
+    </div>
+
+    <script>
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pub?gid=0&single=true&output=csv";
+        
+        let dataSales = 0;
+        let dataProfit = 0;
+
+        // 1. 初始化日期
+        function initDateTime() {
+            const now = new Date();
+            const dateStr = now.getFullYear() + '/' + (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getDate().toString().padStart(2, '0');
+            document.getElementById('current-date').innerText = dateStr;
+
+            const start = new Date(now.getFullYear(), 0, 0);
+            const diff = now - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay);
+            document.getElementById('day-of-year').innerText = now.getFullYear() + '年第' + dayOfYear + '天';
+            return dayOfYear;
+        }
+
+        // 2. 抓取 CSV 資料
+        function fetchCSVData() {
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    dataSales = results.data.reduce((sum, row) => {
+                        let val = parseFloat(row['本幣未稅金額']?.toString().replace(/,/g, ''));
+                        return sum + (isNaN(val) ? 0 : val);
+                    }, 0);
+
+                    dataProfit = results.data.reduce((sum, row) => {
+                        let val = parseFloat(row['毛利']?.toString().replace(/,/g, ''));
+                        return sum + (isNaN(val) ? 0 : val);
+                    }, 0);
+
+                    document.getElementById('total-sales').innerText = 'NT$ ' + dataSales.toLocaleString();
+                    document.getElementById('total-profit').innerText = 'NT$ ' + dataProfit.toLocaleString();
+                    calculateLogic();
+                }
+            });
+        }
+
+        // 3. 核心計算邏輯
+        function calculateLogic() {
+            const dayOfYear = initDateTime();
+            
+            // 取得每月目標與年度目標
+            let monthly = parseFloat(document.getElementById('monthly-target').value.replace(/,/g, '')) || 0;
+            let annual = monthly * 12;
+            document.getElementById('annual-target').innerText = 'NT$ ' + annual.toLocaleString();
+
+            // 計算截至今日的「目標業績」
+            let targetToDate = (annual / 365) * dayOfYear;
+            let diff = dataSales - targetToDate;
+
+            // 顯示進度落後/超前
+            let progEl = document.getElementById('progress-status');
+            progEl.innerText = 'NT$ ' + Math.round(diff).toLocaleString();
+            if (diff >= 0) {
+                progEl.className = 'value highlight-green';
+                document.getElementById('diff-label').innerText = '進度超前';
+            } else {
+                progEl.className = 'value highlight-red';
+                document.getElementById('diff-label').innerText = '進度落後';
+            }
+
+            // 計算底部 Bar 的百分比
+            let expense = parseFloat(document.getElementById('expense-input').value.replace(/,/g, '')) || 0;
+            let reachRate = annual > 0 ? ((dataSales / annual) * 100).toFixed(1) : 0;
+            let profitRate = dataSales > 0 ? ((dataProfit / dataSales) * 100).toFixed(1) : 0;
+            let expenseRate = dataSales > 0 ? ((expense / dataSales) * 100).toFixed(1) : 0;
+
+            document.getElementById('summary-bar').innerText = 
+                `目前業績達成率：${reachRate}% | 毛利率：${profitRate}% | 營業費用率：${expenseRate}%`;
+        }
+
+        // 輔助函式
+        function formatCommas(input) {
+            let val = parseFloat(input.value.replace(/,/g, ''));
+            if (!isNaN(val)) input.value = val.toLocaleString();
+        }
+
+        function openTab(evt, tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-button').forEach(el => el.className = el.className.replace(" active", ""));
+            document.getElementById(tabName).style.display = 'block';
+            evt.currentTarget.className += " active";
+        }
+
+        // 啟動
+        window.onload = function() {
+            initDateTime();
+            fetchCSVData();
+        };
+    </script>
+</body>
+</html>
