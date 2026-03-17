@@ -21,8 +21,8 @@
         .stats-header { background: #3e5a26; color: white; font-weight: bold; text-align: center; }
         .top-20-highlight { background-color: #f0f7ef !important; }
         
-        /* 營業費用欄位樣式：自動抓取時顯示為唯讀狀態 */
-        input { width: 90%; text-align: right; border: none; font-size: 16px; font-family: "Consolas", monospace; background: transparent; padding: 2px; }
+        /* 修正：輸入框文字靠左對齊 */
+        input { width: 95%; text-align: left; border: none; font-size: 16px; font-family: "Consolas", monospace; background: transparent; padding: 2px; }
         input:focus { outline: 1px solid #3e5a26; background: #fff; }
         input[readonly] { background-color: #f0f0f0; color: #888; cursor: not-allowed; }
 
@@ -34,6 +34,7 @@
             .report-title { font-size: 20px; }
             .label, .value { display: block; width: 100%; text-align: left; }
             td { display: block; border: none; border-bottom: 1px solid #eee; padding: 10px; }
+            input { text-align: left; width: 100%; }
             .stats-table thead { display: none; }
             .stats-table tr { display: block; margin-bottom: 10px; border: 1px solid #ddd; }
             .stats-table td { display: flex; justify-content: space-between; }
@@ -59,7 +60,7 @@
             <tr>
                 <td class="label">2026年每月目標</td>
                 <td class="value"><input type="text" id="monthly-target" value="7,500,000" onfocus="this.value=this.value.replace(/,/g,'')" onblur="formatCommas(this); calculateLogic()"></td>
-                <td class="label">2026年營收目標</td><td class="value" id="annual-target">NT$ 90,000,000</td>
+                <td class="label">2026年營營收目標</td><td class="value" id="annual-target">NT$ 90,000,000</td>
             </tr>
             <tr>
                 <td class="label">目前銷貨合計</td><td class="value" id="total-sales">讀取中...</td>
@@ -100,7 +101,6 @@
         const CSV_EXPENSE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pub?gid=1915259935&single=true&output=csv";
         
         function fetchAllData() {
-            // 1. 先抓費用 (工作表2)
             Papa.parse(CSV_EXPENSE_URL, {
                 download: true,
                 header: false,
@@ -108,7 +108,6 @@
                 complete: function(results) {
                     let foundExpense = 0;
                     if (results.data && results.data.length > 0) {
-                        // 強化搜尋：掃描整張表找到第一個數字
                         outerLoop:
                         for (let row of results.data) {
                             for (let cell of row) {
@@ -121,8 +120,6 @@
                         }
                     }
                     document.getElementById('expense-input').value = Math.round(foundExpense).toLocaleString();
-                    
-                    // 2. 費用抓完後再抓銷售資料
                     fetchSalesData();
                 }
             });
@@ -135,7 +132,6 @@
                     const data = results.data;
                     let sTotal = 0, pTotal = 0;
                     let custMap = {};
-
                     data.forEach(row => {
                         let s = parseFloat(row['本幣未稅金額']?.toString().replace(/,/g, '')) || 0;
                         let p = parseFloat(row['毛利']?.toString().replace(/,/g, '')) || 0;
@@ -144,7 +140,6 @@
                         if(!custMap[name]) custMap[name] = { s: 0, p: 0 };
                         custMap[name].s += s; custMap[name].p += p;
                     });
-
                     let custArray = Object.keys(custMap).map(k => ({ name: k, ...custMap[k] })).sort((a, b) => b.s - a.s);
                     let body = document.getElementById('customer-stats-body');
                     body.innerHTML = '';
@@ -160,7 +155,6 @@
                             <td data-label="排名">${rank}</td>
                         </tr>`;
                     });
-
                     document.getElementById('total-sales').innerText = 'NT$ ' + Math.round(sTotal).toLocaleString();
                     document.getElementById('total-profit').innerText = 'NT$ ' + Math.round(pTotal).toLocaleString();
                     calculateLogic(sTotal, pTotal);
@@ -171,27 +165,22 @@
         function calculateLogic(s, p) {
             if(s === undefined) { s = parseFloat(document.getElementById('total-sales').innerText.replace(/[NT$,]/g, '')) || 0; }
             if(p === undefined) { p = parseFloat(document.getElementById('total-profit').innerText.replace(/[NT$,]/g, '')) || 0; }
-            
             const now = new Date();
             const startOfYear = new Date(now.getFullYear(), 0, 0);
             const dayOfYear = Math.floor((now - startOfYear) / 86400000);
-            
             let monthly = parseFloat(document.getElementById('monthly-target').value.replace(/,/g, '')) || 0;
             let annual = monthly * 12;
             document.getElementById('annual-target').innerText = 'NT$ ' + annual.toLocaleString();
-
             let diff = s - ((annual / 365) * dayOfYear);
             let progEl = document.getElementById('progress-status');
             progEl.innerText = 'NT$ ' + Math.round(diff).toLocaleString();
             progEl.className = diff >= 0 ? 'value highlight-green' : 'value highlight-red';
             document.getElementById('diff-label').innerText = diff >= 0 ? '進度超前' : '進度落後';
-
             let exp = parseFloat(document.getElementById('expense-input').value.replace(/,/g, '')) || 0;
             document.getElementById('summary-bar').innerText = `達成率：${annual > 0 ? (s/annual*100).toFixed(1) : 0}% | 毛利率：${s > 0 ? (p/s*100).toFixed(1) : 0}% | 費用率：${s > 0 ? (exp/s*100).toFixed(1) : 0}%`;
         }
 
         function formatCommas(i) { let v = parseFloat(i.value.replace(/,/g, '')); if(!isNaN(v)) i.value = v.toLocaleString(); }
-        
         function openTab(e, n) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab-button').forEach(el => el.className = el.className.replace(" active", ""));
