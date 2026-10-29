@@ -269,7 +269,7 @@
     <div id="app-wrapper">
         <div class="max-w-3xl mx-auto w-full space-y-5">
             
-            <!-- 🌟 修改後的綠色 Banner (上公司名、下雙LOGO併排) -->
+            <!-- 🌟 調整後的綠色 Banner (放大並加粗公司標題) -->
             <header class="green-banner p-4 md:p-5 flex items-center justify-between gap-3 relative">
                 
                 <!-- 左側：上日期、下時間 -->
@@ -278,14 +278,14 @@
                     <div id="header-time" class="text-xl md:text-2xl font-extrabold tracking-wider drop-shadow-sm">00:00</div>
                 </div>
 
-                <!-- 中間：上面公司名稱，下面雙 LOGO 併排（點擊可開關側邊欄） -->
+                <!-- 中間：公司名稱（放大與加粗），下面雙 LOGO 併排 -->
                 <div class="flex flex-col items-center flex-1 cursor-pointer group text-center px-1" onclick="toggleSidebar()" title="點擊開啟管理選單">
-                    <h1 class="text-xs md:text-sm font-bold tracking-wider text-white drop-shadow-sm mb-1.5 m-0 truncate w-full">金牛頓企業入口網</h1>
+                    <h1 class="text-base md:text-xl font-extrabold tracking-wide text-white drop-shadow-md mb-1.5 m-0 truncate w-full">金牛頓企業入口網</h1>
                     <div class="flex items-center justify-center gap-2">
                         <!-- 第一個 LOGO (icon-standard.png) -->
-                        <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" style="height: 24px; width: auto;" class="object-contain rounded bg-white/15 p-0.5 shadow-sm">
+                        <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" style="height: 26px; width: auto;" class="object-contain rounded bg-white/15 p-0.5 shadow-sm">
                         <!-- 第二個 LOGO (logo-standard.png) -->
-                        <img src="https://king-newton.github.io/dashboard/logo-standard.png" alt="Logo" style="height: 24px; width: auto;" class="object-contain rounded bg-white/15 p-0.5 shadow-sm">
+                        <img src="https://king-newton.github.io/dashboard/logo-standard.png" alt="Logo" style="height: 26px; width: auto;" class="object-contain rounded bg-white/15 p-0.5 shadow-sm">
                     </div>
                 </div>
 
@@ -322,16 +322,16 @@
                     <div id="todo-list-container" class="space-y-2 text-sm text-slate-700"></div>
                 </div>
 
-                <!-- 🌟 企業專屬 Dock 快捷列 -->
+                <!-- 🌟 企業專屬 Dock 快捷列 (已更新對應連結) -->
                 <div id="dock-bar">
                     <div class="flex items-center justify-around">
-                        <a href="punchinout.html" class="flex flex-col items-center justify-center text-decoration-none group">
+                        <a href="https://king-newton.github.io/portaly/punchinout/" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                             <div class="app-box w-12 h-12 md:w-16 md:h-16 !rounded-2xl bg-gradient-to-br from-green-500 to-emerald-700 text-xl md:text-2xl">
                                 <i class="fa-solid fa-location-dot text-white"></i>
                             </div>
                             <span class="app-label text-[11px] md:text-xs text-slate-700 font-semibold mt-1">出勤打卡</span>
                         </a>
-                        <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/edit?usp=sharing" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                        <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/edit?gid=0#gid=0" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                             <div class="app-box w-12 h-12 md:w-16 md:h-16 !rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 text-xl md:text-2xl">
                                 <i class="fa-solid fa-table text-white"></i>
                             </div>
