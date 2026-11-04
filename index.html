@@ -78,11 +78,50 @@
             font-size: 18px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.08);
         }
+
+        /* 🔒 身份驗證遮罩 Modal */
+        #auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- 1. 頂部固定 Header (僅保留雙 LOGO) -->
+    <!-- 🔒 1. 身份驗證彈窗遮罩 (尚未驗證時顯示) -->
+    <div id="auth-modal">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl border border-slate-100 text-center space-y-5">
+            <div class="w-16 h-16 bg-emerald-100 text-[#00a600] rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            
+            <div>
+                <h2 class="text-xl font-extrabold text-slate-800 m-0">金牛頓企業入口網</h2>
+                <p class="text-xs text-slate-500 mt-1 m-0">請輸入您的員工工號以驗證身份</p>
+            </div>
+
+            <form onsubmit="verifyEmpId(event)" class="space-y-4">
+                <div>
+                    <input type="password" id="emp-id-input" placeholder="請輸入工號..." required autofocus autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center font-mono text-lg py-3 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
+                </div>
+
+                <div id="auth-msg" class="text-xs font-bold text-rose-500 min-h-[16px]"></div>
+
+                <button type="submit" id="verify-btn" class="w-full bg-[#00a600] hover:bg-[#008f00] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-600/30 transition cursor-pointer">
+                    登入系統
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. 頂部固定 Header (僅保留雙 LOGO) -->
     <header id="top-header">
         <div class="flex items-center justify-center w-full max-w-xl px-2">
             <div class="flex items-center gap-3">
@@ -92,12 +131,12 @@
         </div>
     </header>
 
-    <!-- 2. 中間嵌入整頁行事曆 -->
+    <!-- 3. 中間嵌入整頁行事曆 -->
     <main id="middle-container">
         <iframe src="https://o936157111-ops.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-full border-0"></iframe>
     </main>
 
-    <!-- 3. 底部固定 Dock 快捷列 -->
+    <!-- 4. 底部固定 Dock 快捷列 -->
     <nav id="dock-bar">
         <div class="flex items-center justify-around w-full max-w-xl">
             <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
@@ -127,5 +166,64 @@
         </div>
     </nav>
 
+    <script>
+        // 工號清單 CSV 網址
+        const EMP_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=0&single=true&output=csv";
+
+        // 初始化檢查登入狀態
+        function checkAuthStatus() {
+            const isAuth = localStorage.getItem('king_newton_auth');
+            if (isAuth === 'true') {
+                document.getElementById('auth-modal').style.display = 'none';
+            }
+        }
+
+        // 驗證工號
+        async function verifyEmpId(e) {
+            e.preventDefault();
+            const inputId = document.getElementById('emp-id-input').value.trim().toUpperCase();
+            const msgDiv = document.getElementById('auth-msg');
+            const verifyBtn = document.getElementById('verify-btn');
+
+            if (!inputId) {
+                msgDiv.innerText = "請輸入工號！";
+                return;
+            }
+
+            msgDiv.innerText = "";
+            verifyBtn.innerText = "驗證中...";
+            verifyBtn.disabled = true;
+
+            try {
+                const response = await fetch(EMP_CSV_URL);
+                const csvText = await response.text();
+                
+                // 將 CSV 的所有儲存格打平清理，比對是否存在輸入的工號
+                const validIds = csvText
+                    .split(/\r?\n/)
+                    .flatMap(row => row.split(','))
+                    .map(cell => cell.replaceAll('"', '').trim().toUpperCase())
+                    .filter(id => id.length > 0);
+
+                if (validIds.includes(inputId)) {
+                    // 驗證成功
+                    localStorage.setItem('king_newton_auth', 'true');
+                    localStorage.setItem('king_newton_emp_id', inputId);
+                    document.getElementById('auth-modal').style.display = 'none';
+                } else {
+                    msgDiv.innerText = "❌ 工號不正確，請重新輸入！";
+                    document.getElementById('emp-id-input').value = "";
+                }
+            } catch (error) {
+                console.error("驗證失敗:", error);
+                msgDiv.innerText = "⚠️ 網路連線錯誤，無法完成驗證。";
+            } finally {
+                verifyBtn.innerText = "登入系統";
+                verifyBtn.disabled = false;
+            }
+        }
+
+        checkAuthStatus();
+    </script>
 </body>
 </html>
