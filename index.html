@@ -30,7 +30,7 @@
             justify-content: flex-start;
             width: 100%;
             padding: 12px;
-            padding-bottom: 30px;
+            padding-bottom: 140px; /* 確保底部留白，不被 Dock 欄遮擋 */
         }
 
         @media (min-width: 768px) {
@@ -52,7 +52,7 @@
         .app-box {
             width: 52px;
             height: 52px;
-            border-radius: 14px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -71,19 +71,36 @@
             }
         }
 
-        /* 全面比照電腦版：不懸浮、無自動隱藏，靜態排列於下方 */
+        /* 🌟 底部固定 Dock 欄 */
         #dock-bar {
-            width: 100%;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border-radius: 1.25rem;
-            padding: 1rem 0.75rem;
-            margin-top: 1rem;
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 35;
+            width: calc(100% - 16px);
+            max-width: 540px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            padding: 8px 10px;
         }
 
         @media (min-width: 768px) {
             #dock-bar {
+                position: static !important;
+                transform: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                background: #ffffff !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                border: 1px solid #e2e8f0 !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+                border-radius: 1rem !important;
                 padding: 1.5rem !important;
                 margin-top: 1.25rem !important;
             }
@@ -112,37 +129,32 @@
 
             <main id="desktop-cards-container" class="w-full space-y-4 md:space-y-5">
                 
-                <!-- 🌟 嵌入公司活動行事曆 iframe 區塊 -->
-                <div class="bg-white p-2 md:p-4 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <iframe src="https://o936157111-ops.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-[500px] md:h-[600px] rounded-xl border-0"></iframe>
-                </div>
-
-                <!-- 🌟 企業專屬 Dock 快捷列（標準內嵌排版） -->
+                <!-- 🌟 企業專屬 Dock 快捷列（固定在畫面底部，方便隨時點擊） -->
                 <div id="dock-bar">
                     <div class="flex items-center justify-around gap-1">
                         <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                             <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
                                 <i class="fa-solid fa-location-dot"></i>
                             </div>
-                            <span class="app-label text-xs md:text-sm text-slate-700 font-semibold mt-1.5">出勤打卡</span>
+                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">出勤打卡</span>
                         </a>
                         <a href="https://king-newton.github.io/dashboard/leave.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                             <div class="app-box bg-gradient-to-br from-amber-400 to-yellow-600 text-white">
                                 <i class="fa-solid fa-table"></i>
                             </div>
-                            <span class="app-label text-xs md:text-sm text-slate-700 font-semibold mt-1.5">請假單</span>
+                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">請假單</span>
                         </a>
                         <a href="https://king-newton.github.io/portaly/King-Newton.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                             <div class="app-box bg-gradient-to-br from-sky-500 to-blue-700 text-white">
                                 <i class="fa-solid fa-building"></i>
                             </div>
-                            <span class="app-label text-xs md:text-sm text-slate-700 font-semibold mt-1.5">公司資訊</span>
+                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">公司資訊</span>
                         </a>
                         <a href="https://o936157111-ops.github.io/company-calendar/" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                             <div class="app-box bg-gradient-to-br from-pink-500 to-rose-700 text-white">
                                 <i class="fa-solid fa-calendar-days"></i>
                             </div>
-                            <span class="app-label text-xs md:text-sm text-slate-700 font-semibold mt-1.5">活動行事曆</span>
+                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">活動行事曆</span>
                         </a>
                     </div>
                 </div>
