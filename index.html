@@ -14,7 +14,7 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* 鎖定全螢幕，防止頁面整體滾動 */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f8;
             color: #334155;
@@ -112,7 +112,7 @@
                     <input type="text" id="emp-id-input" placeholder="請輸入工號 (例如: E020)" required autofocus autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
                 </div>
                 <div>
-                    <input type="text" id="emp-name-input" placeholder="請輸入您的姓名" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
+                    <input type="text" id="emp-name-input" placeholder="請輸入您的姓名 (例如: ERIC)" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
                 </div>
 
                 <div id="auth-msg" class="text-xs font-bold text-rose-500 min-h-[16px]"></div>
@@ -170,8 +170,23 @@
     </nav>
 
     <script>
-        // 工號與姓名清單 CSV 網址
-        const EMP_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=0&single=true&output=csv";
+        // 內建員工工號與姓名對照表
+        const EMPLOYEE_LIST = [
+            { id: "E001", name: "李彥綸" },
+            { id: "E002", name: "楊添仰" },
+            { id: "E003", name: "陳品鈞" },
+            { id: "E005", name: "陳秀燕" },
+            { id: "E006", name: "高欣宜" },
+            { id: "E011", name: "余品橋" },
+            { id: "E012", name: "陳慧真" },
+            { id: "E020", name: "ERIC" },
+            { id: "E023", name: "陳靖昂" },
+            { id: "E026", name: "何成偉" },
+            { id: "E029", name: "李佩娟" },
+            { id: "E033", name: "曾晨杰" },
+            { id: "E035", name: "戴政宏" },
+            { id: "E036", name: "詹淑敏" }
+        ];
 
         // 初始化檢查登入狀態
         function checkAuthStatus() {
@@ -181,66 +196,33 @@
             }
         }
 
-        // 驗證工號與姓名（使用 CORS 代理繞過阻擋）
-        async function verifyEmp(e) {
+        // 本地前端立即驗證工號與姓名
+        function verifyEmp(e) {
             e.preventDefault();
             const inputId = document.getElementById('emp-id-input').value.trim().toUpperCase();
-            const inputName = document.getElementById('emp-name-input').value.trim();
+            const inputName = document.getElementById('emp-name-input').value.trim().toUpperCase();
             const msgDiv = document.getElementById('auth-msg');
-            const verifyBtn = document.getElementById('verify-btn');
 
             if (!inputId || !inputName) {
                 msgDiv.innerText = "請完整輸入工號與姓名！";
                 return;
             }
 
-            msgDiv.innerText = "";
-            verifyBtn.innerText = "驗證中...";
-            verifyBtn.disabled = true;
+            // 比對對照表 (自動自動忽視英文大小寫差異)
+            const matchedEmp = EMPLOYEE_LIST.find(emp => 
+                emp.id.toUpperCase() === inputId && emp.name.toUpperCase() === inputName
+            );
 
-            try {
-                // 透過 api.allorigins 代理請求，解決 GitHub Pages 讀取 Google Sheets 的 CORS 限制
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(EMP_CSV_URL)}`;
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                
-                if (!data.contents) {
-                    throw new Error("無法取得試算表內容");
-                }
-
-                const csvText = data.contents;
-                const rows = csvText.split(/\r?\n/).map(row => row.split(','));
-                let isValid = false;
-
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (row.length >= 2) {
-                        const sheetId = row[0].replaceAll('"', '').trim().toUpperCase();
-                        const sheetName = row[1].replaceAll('"', '').trim();
-
-                        if (sheetId === inputId && sheetName === inputName) {
-                            isValid = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (isValid) {
-                    localStorage.setItem('king_newton_auth', 'true');
-                    localStorage.setItem('king_newton_emp_id', inputId);
-                    localStorage.setItem('king_newton_emp_name', inputName);
-                    document.getElementById('auth-modal').style.display = 'none';
-                } else {
-                    msgDiv.innerText = "❌ 工號與姓名不符或不存在，請重新輸入！";
-                    document.getElementById('emp-id-input').value = "";
-                    document.getElementById('emp-name-input').value = "";
-                }
-            } catch (error) {
-                console.error("驗證失敗:", error);
-                msgDiv.innerText = "⚠️ 網路連線或授權異常，請檢查試算表是否已公開發布。";
-            } finally {
-                verifyBtn.innerText = "確認並登入系統";
-                verifyBtn.disabled = false;
+            if (matchedEmp) {
+                // 驗證成功，記住狀態
+                localStorage.setItem('king_newton_auth', 'true');
+                localStorage.setItem('king_newton_emp_id', matchedEmp.id);
+                localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+                document.getElementById('auth-modal').style.display = 'none';
+            } else {
+                msgDiv.innerText = "❌ 工號與姓名不符，請重新輸入！";
+                document.getElementById('emp-id-input').value = "";
+                document.getElementById('emp-name-input').value = "";
             }
         }
 
