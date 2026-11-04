@@ -22,7 +22,7 @@
             <h1 class="text-2xl font-bold text-slate-800 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-file-signature text-emerald-600"></i> 公司請假與簽核管理入口
             </h1>
-            <p class="text-sm text-slate-500 mt-1">串聯 Google 試算表 · 自動計算特休 · 雙主管電子印章簽核</p>
+            <p class="text-sm text-slate-500 mt-1">串聯 Google 試算表 · 個人歷年請假統計 · 雙主管電子印章簽核</p>
         </div>
 
         <!-- 功能頁籤切換 -->
@@ -41,19 +41,21 @@
             
             <form id="leaveForm" onsubmit="submitLeave(event)" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- 姓名改為自動讀取登入身分並鎖定 -->
+                    <!-- 姓名（自動帶入並鎖定） -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">申請人姓名</label>
                         <input type="text" id="empNameDisplay" readonly class="w-full bg-slate-200 p-3 rounded-xl border border-slate-300 text-sm font-bold text-slate-700 outline-none" />
-                        <input type="hidden" id="empName" /> <!-- 隱藏欄位供背景送出使用 -->
+                        <input type="hidden" id="empName" />
                     </div>
 
-                    <!-- 剩餘特休即時顯示區 -->
+                    <!-- 個人請假統計卡片 -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">115年剩餘特休天數</label>
-                        <div id="leaveBalance" class="w-full bg-emerald-50 text-emerald-800 p-3 rounded-xl border border-emerald-200 font-bold text-sm flex items-center justify-between">
-                            <span>正在自動查詢您的特休資料...</span>
-                            <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">個人累積請假統計紀錄</label>
+                        <div id="leaveSummaryCard" class="w-full bg-emerald-50 text-emerald-900 p-3 rounded-xl border border-emerald-200 text-xs space-y-1">
+                            <div class="flex justify-between items-center font-bold">
+                                <span>載入個人統計資料中...</span>
+                                <i class="fa-solid fa-spinner fa-spin text-emerald-600"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -71,18 +73,18 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">開始時間</label>
-                        <input type="datetime-local" id="startTime" required class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:border-emerald-600">
+                        <input type="datetime-local" id="startTime" onchange="calculateLeaveDuration()" required class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:border-emerald-600">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">結束時間</label>
-                        <input type="datetime-local" id="endTime" required class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:border-emerald-600">
+                        <input type="datetime-local" id="endTime" onchange="calculateLeaveDuration()" required class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:border-emerald-600">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-1">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">請假總天數/時數</label>
-                        <input type="number" id="leaveDays" step="0.5" placeholder="例如：1 或 0.5" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">請假總天數/時數 (自動計算)</label>
+                        <input type="number" id="leaveDays" step="0.5" placeholder="自動計算天數" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm font-bold text-emerald-700 outline-none focus:border-emerald-600">
                     </div>
                     <div class="md:col-span-3">
                         <label class="block text-xs font-semibold text-slate-600 mb-1">請假事由</label>
@@ -147,27 +149,126 @@
 
     <script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCpazOw8nEAirKT8j4ruNDwwB89KcA_LlmXPAHA7skjIKY2idXA23HyYctylp7aSPXgw/exec";
-        
-        let currentEmployees = [];
+        const LEAVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv";
 
-        // 頁面載入時自動檢查登入狀態並帶入姓名
+        // 頁面載入時自動檢查登入狀態並鎖定
         window.addEventListener('DOMContentLoaded', () => {
             const loggedInName = localStorage.getItem('king_newton_emp_name');
             const isAuth = localStorage.getItem('king_newton_auth');
 
             if (isAuth !== 'true' || !loggedInName) {
                 alert("您尚未登入系統，請先回到入口網進行身分驗證！");
-                window.location.href = "index.html"; // 未登入自動引導回首頁
+                window.location.href = "index.html";
                 return;
             }
 
-            // 自動填入並鎖定姓名顯示
             document.getElementById('empNameDisplay').value = loggedInName;
             document.getElementById('empName').value = loggedInName;
 
-            // 自動查詢該同仁的特休
-            fetchEmployeeLeave(loggedInName);
+            // 讀取 CSV 進行個人請假統計
+            fetchPersonalLeaveStats(loggedInName);
         });
+
+        // 讀取 CSV 資料並統計該同仁請假天數
+        async function fetchPersonalLeaveStats(name) {
+            const summaryDiv = document.getElementById('leaveSummaryCard');
+
+            try {
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(LEAVE_CSV_URL)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                if (!data.contents) throw new Error("無效資料");
+
+                const rows = data.contents.split(/\r?\n/).map(row => row.split(','));
+                const stats = {};
+                let totalRecords = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (row.length < 2) continue;
+
+                    const rowContent = row[1] ? row[1].replaceAll('"', '').trim() : '';
+
+                    // 檢查資料列是否包含該員工姓名
+                    if (rowContent.includes(name)) {
+                        totalRecords++;
+                        // 提取假別類別（例如：特休假、事假、病假）
+                        let type = "其他請假";
+                        if (rowContent.includes("特休")) type = "特休假";
+                        else if (rowContent.includes("事假")) type = "事假";
+                        else if (rowContent.includes("病假")) type = "病假";
+                        else if (rowContent.includes("公假") || rowContent.includes("公出")) type = "公假/公出";
+
+                        stats[type] = (stats[type] || 0) + 1;
+                    }
+                }
+
+                if (totalRecords > 0) {
+                    const detailHtml = Object.entries(stats).map(([type, count]) => 
+                        `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold mr-1.5">${type}: ${count} 次</span>`
+                    ).join('');
+
+                    summaryDiv.innerHTML = `
+                        <div class="flex justify-between items-center font-bold text-emerald-800">
+                            <span>👤 ${name} 歷史請假紀錄</span>
+                            <span class="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full">共 ${totalRecords} 筆記錄</span>
+                        </div>
+                        <div class="pt-1 flex flex-wrap gap-1">
+                            ${detailHtml}
+                        </div>
+                    `;
+                } else {
+                    summaryDiv.innerHTML = `
+                        <div class="font-bold text-slate-600">
+                            👤 ${name} 目前尚無歷史請假紀錄
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error("讀取請假統計失敗:", error);
+                summaryDiv.innerHTML = `
+                    <div class="text-slate-500 font-bold">
+                        👤 ${name} （歷史紀錄連線查詢中）
+                    </div>
+                `;
+            }
+        }
+
+        // 自動計算請假時間（開始至結束天數）
+        function calculateLeaveDuration() {
+            const startVal = document.getElementById('startTime').value;
+            const endVal = document.getElementById('endTime').value;
+            const daysInput = document.getElementById('leaveDays');
+
+            if (!startVal || !endVal) return;
+
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+
+            if (end <= start) {
+                alert("結束時間必須晚於開始時間！");
+                daysInput.value = "";
+                return;
+            }
+
+            // 計算毫秒差並轉為小時數
+            const diffHours = (end - start) / (1000 * 60 * 60);
+            
+            // 假設每日工作時間以 8 小時計算折算天數
+            let calculatedDays = diffHours / 24;
+
+            if (calculatedDays >= 1) {
+                // 超過 1 天以上者，以半天 (0.5) 為單位無條件進位
+                calculatedDays = Math.ceil(calculatedDays * 2) / 2;
+            } else {
+                // 1 天以內者，轉換為天數 (以 8 小時為 1 天折算)，最小單位取至 0.5 天或精確小數
+                calculatedDays = Math.round((diffHours / 8) * 10) / 10;
+            }
+
+            daysInput.value = calculatedDays;
+        }
 
         // 頁籤切換
         function switchTab(tab) {
@@ -183,29 +284,6 @@
                 document.getElementById('tab-apply').className = "flex-1 py-3 font-bold text-sm text-center rounded-lg text-slate-600 hover:bg-slate-50 transition";
                 loadPendingLeaves();
             }
-        }
-
-        // 載入員工特休資料
-        function fetchEmployeeLeave(name) {
-            const balanceDiv = document.getElementById('leaveBalance');
-            balanceDiv.innerHTML = "<span>正在向 Google 試算表查詢中...</span>";
-
-            fetch(`${GAS_WEB_APP_URL}?action=getEmployeeData`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === 'success') {
-                        currentEmployees = res.data;
-                        const emp = currentEmployees.find(e => e.name === name);
-                        if (emp) {
-                            balanceDiv.innerHTML = `<span>【${emp.name}】115年剩餘特休：<strong class="text-lg text-emerald-700">${emp.remainingLeave}</strong> 天</span>`;
-                        } else {
-                            balanceDiv.innerHTML = `<span>【${name}】無對應特休額度資料</span>`;
-                        }
-                    }
-                })
-                .catch(err => {
-                    balanceDiv.innerHTML = `<span class="text-red-500">無法連線至雲端試算表</span>`;
-                });
         }
 
         // 提交請假單
@@ -234,11 +312,10 @@
                 alert(`🎉 ${res.message}\n單號：${res.leaveId}`);
                 document.getElementById('leaveForm').reset();
                 
-                // 重新將登入者姓名回填
                 const loggedInName = localStorage.getItem('king_newton_emp_name');
                 document.getElementById('empNameDisplay').value = loggedInName;
                 document.getElementById('empName').value = loggedInName;
-                fetchEmployeeLeave(loggedInName);
+                fetchPersonalLeaveStats(loggedInName);
             })
             .catch(err => {
                 alert("❌ 送出失敗，請再試一次。");
@@ -282,7 +359,7 @@
                 });
         }
 
-        // 主管執行簽核 (加蓋電子印章時間戳記)
+        // 主管執行簽核
         function approveLeave(leaveId) {
             const managerName = document.getElementById('managerName').value;
             const step = parseInt(document.getElementById('managerStep').value);
