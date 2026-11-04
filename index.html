@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>金牛頓企業管理入口網 | 公司活動行事曆</title>
+    <title>金牛頓企業入口網 | 公司活動行事曆</title>
     <!-- 網頁瀏覽器分頁小圖示 (Favicon) -->
     <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,7 +14,7 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            overflow: hidden; /* 鎖定全螢幕，防止頁面整體滾動 */
+            overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f8;
             color: #334155;
@@ -181,7 +181,7 @@
             }
         }
 
-        // 驗證工號與姓名
+        // 驗證工號與姓名（使用 CORS 代理繞過阻擋）
         async function verifyEmp(e) {
             e.preventDefault();
             const inputId = document.getElementById('emp-id-input').value.trim().toUpperCase();
@@ -199,10 +199,16 @@
             verifyBtn.disabled = true;
 
             try {
-                const response = await fetch(EMP_CSV_URL);
-                const csvText = await response.text();
+                // 透過 api.allorigins 代理請求，解決 GitHub Pages 讀取 Google Sheets 的 CORS 限制
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(EMP_CSV_URL)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
                 
-                // 解析 CSV 資料列 (假設第一欄為工號、第二欄為姓名)
+                if (!data.contents) {
+                    throw new Error("無法取得試算表內容");
+                }
+
+                const csvText = data.contents;
                 const rows = csvText.split(/\r?\n/).map(row => row.split(','));
                 let isValid = false;
 
@@ -212,7 +218,6 @@
                         const sheetId = row[0].replaceAll('"', '').trim().toUpperCase();
                         const sheetName = row[1].replaceAll('"', '').trim();
 
-                        // 比對工號與姓名是否同時吻合同一列
                         if (sheetId === inputId && sheetName === inputName) {
                             isValid = true;
                             break;
@@ -221,7 +226,6 @@
                 }
 
                 if (isValid) {
-                    // 驗證成功
                     localStorage.setItem('king_newton_auth', 'true');
                     localStorage.setItem('king_newton_emp_id', inputId);
                     localStorage.setItem('king_newton_emp_name', inputName);
@@ -233,7 +237,7 @@
                 }
             } catch (error) {
                 console.error("驗證失敗:", error);
-                msgDiv.innerText = "⚠️ 網路連線錯誤，無法完成驗證。";
+                msgDiv.innerText = "⚠️ 網路連線或授權異常，請檢查試算表是否已公開發布。";
             } finally {
                 verifyBtn.innerText = "確認並登入系統";
                 verifyBtn.disabled = false;
