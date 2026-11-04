@@ -36,7 +36,7 @@
             font-weight: bold; 
             color: #444;
         }
-        select { 
+        select, input[type="text"] { 
             width: 100%; 
             padding: 12px; 
             box-sizing: border-box; 
@@ -103,23 +103,11 @@
 <div class="card">
     <h2>🚀 公司出勤與狀態回報</h2>
     <form id="checkinForm">
+        <!-- 員工姓名改為自動讀取登入身分並鎖定 -->
         <div class="form-group">
-            <label for="empName">員工姓名：</label>
-            <select id="empName" required>
-                <option value="" disabled selected>-- 請選擇您的姓名 --</option>
-                <option value="陳秀燕">陳秀燕</option>
-                <option value="高欣宜">高欣宜</option>
-                <option value="ERIC">ERIC</option>
-                <option value="陳靖昂">陳靖昂</option>
-                <option value="何成偉">何成偉</option>
-                <option value="陳品鈞">陳品鈞</option>
-                <option value="楊添仰">楊添仰</option>
-                <option value="戴政宏">戴政宏</option>
-                <option value="曾晨杰">曾晨杰</option>
-                <option value="李佩娟">李佩娟</option>
-                <option value="余品橋">余品橋</option>
-                <option value="詹淑敏">詹淑敏</option>
-            </select>
+            <label for="empNameDisplay">員工姓名：</label>
+            <input type="text" id="empNameDisplay" readonly style="background: #e9ecef; font-weight: bold; color: #495057;" />
+            <input type="hidden" id="empName" /> <!-- 隱藏欄位供背景送出使用 -->
         </div>
 
         <div class="form-group">
@@ -151,13 +139,28 @@
 <div class="card" style="text-align: center;">
     <h3 style="margin-top: 0; color: #333; font-size: 18px;">📋 出勤紀錄查詢</h3>
     <p style="font-size: 14px; color: #666;">點擊下方按鈕即可隨時在新視窗查看出勤總表列印檔：</p>
-    <!-- 採用 PDF 匯出/列印報表檢視連結 -->
     <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=pdf" target="_blank" class="sheet-btn">
         🖨️ 開啟即時出勤列印報表檔
     </a>
 </div>
 
 <script>
+    // 頁面載入時自動檢查登入狀態並帶入姓名
+    window.addEventListener('DOMContentLoaded', () => {
+        const loggedInName = localStorage.getItem('king_newton_emp_name');
+        const isAuth = localStorage.getItem('king_newton_auth');
+
+        if (isAuth !== 'true' || !loggedInName) {
+            alert("您尚未登入系統，請先回到入口網進行驗證！");
+            window.location.href = "index.html"; // 未登入自動引導回首頁
+            return;
+        }
+
+        // 自動填入並鎖定姓名顯示
+        document.getElementById('empNameDisplay').value = loggedInName;
+        document.getElementById('empName').value = loggedInName;
+    });
+
     let currentCoords = "";
     let currentAddress = "";
 
@@ -175,7 +178,6 @@
                     
                     locText.innerText = "定位成功，正在轉換為中文地址...";
 
-                    // 使用 OpenStreetMap Nominatim API 進行反向地理編碼
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=zh-TW`)
                         .then(response => response.json())
                         .then(data => {
@@ -252,10 +254,15 @@
         .then(response => {
             document.getElementById("status").innerText = "🎉 送出成功！資料已存入雲端試算表。";
             
-            // 【修改處】打卡成功後，自動在新視窗開啟列印報表檔（PDF 格式預覽）
             window.open('https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=pdf', '_blank');
 
             document.getElementById("checkinForm").reset();
+            
+            // 重新將登入者姓名回填（因為表單 reset 會清空欄位）
+            const loggedInName = localStorage.getItem('king_newton_emp_name');
+            document.getElementById('empNameDisplay').value = loggedInName;
+            document.getElementById('empName').value = loggedInName;
+
             document.getElementById("locationText").innerText = "尚未取得位置";
             currentAddress = "";
             currentCoords = "";
