@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>金牛頓企業管理入口網 | 行事曆今日資訊</title>
+    <title>金牛頓企業管理入口網 | 今日活動資訊</title>
     <!-- 網頁瀏覽器分頁小圖示 (Favicon) -->
     <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,20 +14,20 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            overflow: hidden; /* 防止整個頁面捲動，鎖定在全螢幕 */
+            overflow: hidden; /* 鎖定全螢幕，防止頁面整體滾動 */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f8;
             color: #334155;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 頂部固定區塊 */
+        /* 🌟 頂部固定區塊 */
         #top-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 64px;
+            height: 60px;
             background-color: #00a600;
             color: #ffffff;
             display: flex;
@@ -38,24 +38,27 @@
             padding: 0 16px;
         }
 
-        /* 中間行事曆嵌入區塊（自動填滿上下之間的空間） */
+        /* 🌟 中間動態內容區塊 */
         #middle-container {
             position: absolute;
-            top: 64px;
-            bottom: 76px;
+            top: 60px;
+            bottom: 74px;
             left: 0;
             right: 0;
-            background: #ffffff;
-            overflow: hidden;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* 底部固定 Dock 快捷列區塊 */
+        /* 🌟 底部固定 Dock 快捷列區塊 */
         #dock-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 76px;
+            height: 74px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -82,11 +85,11 @@
 </head>
 <body>
 
-    <!-- 🌟 1. 頂部固定區塊：公司名稱與雙 LOGO -->
+    <!-- 1. 頂部固定 Header -->
     <header id="top-header">
-        <div class="flex items-center justify-between w-full max-w-xl px-2">
+        <div class="flex items-center justify-between w-full max-w-md px-2">
             <h1 class="text-base font-extrabold tracking-wider text-white drop-shadow-sm m-0">
-                金牛頓企業入口網
+                金牛頓入口網
             </h1>
             <div class="flex items-center gap-2">
                 <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" class="h-6 w-auto object-contain rounded bg-white/15 p-0.5">
@@ -95,14 +98,37 @@
         </div>
     </header>
 
-    <!-- 🌟 2. 中間嵌入區塊：行事曆內容 -->
-    <div id="middle-container">
-        <iframe src="https://o936157111-ops.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-full border-0"></iframe>
-    </div>
+    <!-- 2. 中間獨立顯示「當天資訊」專區 -->
+    <main id="middle-container">
+        <div class="w-full max-w-md space-y-4">
+            
+            <!-- 日期卡片 -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <span id="today-date-str" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                        載入日期中...
+                    </span>
+                    <h2 class="text-lg font-extrabold text-slate-800 mt-2 m-0">今日營運與活動事項</h2>
+                </div>
+                <div class="text-emerald-600 text-2xl p-2 bg-emerald-50 rounded-xl">
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+            </div>
 
-    <!-- 🌟 3. 底部固定區塊：快捷列 -->
+            <!-- 當天事項內容列表區塊 -->
+            <div id="events-list" class="space-y-3">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center text-slate-400 text-sm">
+                    <i class="fa-solid fa-spinner fa-spin text-emerald-600 text-xl mb-2"></i>
+                    <p class="m-0">正在讀取今日行程資料...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 3. 底部固定 Dock 快捷列 -->
     <nav id="dock-bar">
-        <div class="flex items-center justify-around w-full max-w-xl">
+        <div class="flex items-center justify-around w-full max-w-md">
             <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                 <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
                     <i class="fa-solid fa-location-dot"></i>
@@ -130,5 +156,88 @@
         </div>
     </nav>
 
+    <script>
+        // 設定 Google 試算表 CSV 匯出網址 (替換 pubhtml 為 pub?output=csv)
+        const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?output=csv";
+
+        function getTodayString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            return {
+                formattedDate: `${year}/${month}/${day}`,
+                isoDate: `${year}-${month}-${day}`,
+                weekday: weekdays[now.getDay()]
+            };
+        }
+
+        async function fetchTodayEvents() {
+            const todayInfo = getTodayString();
+            document.getElementById('today-date-str').innerText = `📅 ${todayInfo.formattedDate} (${todayInfo.weekday})`;
+            
+            const listContainer = document.getElementById('events-list');
+
+            try {
+                const response = await fetch(SPREADSHEET_CSV_URL);
+                const csvData = await response.text();
+                
+                // 解析 CSV 資料列
+                const rows = csvData.split('\n').map(row => row.split(','));
+                
+                // 搜尋符合今天日期的事件紀錄
+                const todayEvents = [];
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < 2) continue;
+                    
+                    const dateCell = row[0].trim().replaceAll('"', '');
+                    const contentCell = row[1] ? row[1].trim().replaceAll('"', '') : '';
+                    const noteCell = row[2] ? row[2].trim().replaceAll('"', '') : '';
+
+                    // 彈性比對日期格式 (例如 2026/11/04 或 2026-11-04)
+                    if (dateCell.includes(todayInfo.formattedDate) || dateCell.includes(todayInfo.isoDate)) {
+                        todayEvents.push({
+                            title: contentCell || "公司活動",
+                            note: noteCell
+                        });
+                    }
+                }
+
+                // 渲染至前端頁面
+                if (todayEvents.length > 0) {
+                    listContainer.innerHTML = todayEvents.map(evt => `
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+                            <div class="flex items-center gap-2 text-emerald-700 font-bold text-sm">
+                                <i class="fa-solid fa-circle-check text-xs"></i>
+                                <span>${evt.title}</span>
+                            </div>
+                            ${evt.note ? `<p class="text-xs text-slate-500 m-0 pl-5">${evt.note}</p>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    listContainer.innerHTML = `
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center text-slate-500 text-sm">
+                            <i class="fa-solid fa-calendar-check text-emerald-500 text-2xl mb-2"></i>
+                            <p class="font-bold text-slate-700 m-0">今日無排定活動/事項</p>
+                            <p class="text-xs text-slate-400 mt-1 m-0">祝您今天工作順利！</p>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error("讀取試算表失敗:", error);
+                listContainer.innerHTML = `
+                    <div class="bg-rose-50 p-4 rounded-2xl border border-rose-200 text-rose-700 text-xs text-center">
+                        ⚠️ 無法載入最新行程資料，請確認試算表已發布至網路。
+                    </div>
+                `;
+            }
+        }
+
+        fetchTodayEvents();
+    </script>
 </body>
 </html>
