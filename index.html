@@ -2,166 +2,133 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>金牛頓企業管理入口網 | Gold Newton Enterprise Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>金牛頓企業管理入口網 | 行事曆今日資訊</title>
     <!-- 網頁瀏覽器分頁小圖示 (Favicon) -->
     <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f0f4f8;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            color: #334155;
+        * { box-sizing: border-box; }
+        body, html {
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            height: 100vh;
+            overflow: hidden; /* 防止整個頁面捲動，鎖定在全螢幕 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f4f8;
+            color: #334155;
             -webkit-tap-highlight-color: transparent;
         }
 
-        #app-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            width: 100%;
-            padding: 12px;
-            padding-bottom: 140px; /* 確保底部留白，不被 Dock 欄遮擋 */
-        }
-
-        @media (min-width: 768px) {
-            #app-wrapper { 
-                padding: 24px; 
-                padding-bottom: 40px; 
-            }
-        }
-
-        .green-banner {
+        /* 頂部固定區塊 */
+        #top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
             background-color: #00a600;
-            border-radius: 20px;
             color: #ffffff;
-            box-shadow: 0 4px 15px rgba(0, 166, 0, 0.25);
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .app-box {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid rgba(255,255,255,0.6);
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 166, 0, 0.2);
+            z-index: 50;
+            padding: 0 16px;
         }
 
-        @media (min-width: 768px) {
-            .app-box {
-                width: 64px;
-                height: 64px;
-                border-radius: 18px;
-                font-size: 26px;
-            }
+        /* 中間行事曆嵌入區塊（自動填滿上下之間的空間） */
+        #middle-container {
+            position: absolute;
+            top: 64px;
+            bottom: 76px;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            overflow: hidden;
         }
 
-        /* 🌟 底部固定 Dock 欄 */
+        /* 底部固定 Dock 快捷列區塊 */
         #dock-bar {
             position: fixed;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 35;
-            width: calc(100% - 16px);
-            max-width: 540px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 76px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-            border-radius: 20px;
-            padding: 8px 10px;
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 8px;
         }
 
-        @media (min-width: 768px) {
-            #dock-bar {
-                position: static !important;
-                transform: none !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                background: #ffffff !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                border: 1px solid #e2e8f0 !important;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-                border-radius: 1rem !important;
-                padding: 1.5rem !important;
-                margin-top: 1.25rem !important;
-            }
+        .app-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
         }
     </style>
 </head>
 <body>
 
-    <div id="app-wrapper">
-        <div class="max-w-3xl mx-auto w-full space-y-4 md:space-y-5">
-            
-            <!-- 🌟 精簡版綠色 Banner（僅保留公司名與雙 LOGO） -->
-            <header class="green-banner p-3.5 md:p-5 relative">
-                <div class="flex flex-col items-center justify-center text-center">
-                    <h1 class="text-base md:text-xl font-extrabold tracking-wider text-white drop-shadow-md mb-2 m-0">
-                        金牛頓企業入口網
-                    </h1>
-                    <div class="flex items-center justify-center gap-2.5">
-                        <!-- 第一個 LOGO (icon-standard.png) -->
-                        <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" class="h-6 md:h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
-                        <!-- 第二個 LOGO (logo-standard.png) -->
-                        <img src="https://king-newton.github.io/dashboard/logo-standard.png" alt="Logo" class="h-6 md:h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
-                    </div>
-                </div>
-            </header>
-
-            <main id="desktop-cards-container" class="w-full space-y-4 md:space-y-5">
-                
-                <!-- 🌟 企業專屬 Dock 快捷列（固定在畫面底部，方便隨時點擊） -->
-                <div id="dock-bar">
-                    <div class="flex items-center justify-around gap-1">
-                        <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
-                                <i class="fa-solid fa-location-dot"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">出勤打卡</span>
-                        </a>
-                        <a href="https://king-newton.github.io/dashboard/leave.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-amber-400 to-yellow-600 text-white">
-                                <i class="fa-solid fa-table"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">請假單</span>
-                        </a>
-                        <a href="https://king-newton.github.io/portaly/King-Newton.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-sky-500 to-blue-700 text-white">
-                                <i class="fa-solid fa-building"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">公司資訊</span>
-                        </a>
-                        <a href="https://o936157111-ops.github.io/company-calendar/" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-pink-500 to-rose-700 text-white">
-                                <i class="fa-solid fa-calendar-days"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">活動行事曆</span>
-                        </a>
-                    </div>
-                </div>
-
-            </main>
+    <!-- 🌟 1. 頂部固定區塊：公司名稱與雙 LOGO -->
+    <header id="top-header">
+        <div class="flex items-center justify-between w-full max-w-xl px-2">
+            <h1 class="text-base font-extrabold tracking-wider text-white drop-shadow-sm m-0">
+                金牛頓企業入口網
+            </h1>
+            <div class="flex items-center gap-2">
+                <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" class="h-6 w-auto object-contain rounded bg-white/15 p-0.5">
+                <img src="https://king-newton.github.io/dashboard/logo-standard.png" alt="Logo" class="h-6 w-auto object-contain rounded bg-white/15 p-0.5">
+            </div>
         </div>
+    </header>
+
+    <!-- 🌟 2. 中間嵌入區塊：行事曆內容 -->
+    <div id="middle-container">
+        <iframe src="https://o936157111-ops.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-full border-0"></iframe>
     </div>
+
+    <!-- 🌟 3. 底部固定區塊：快捷列 -->
+    <nav id="dock-bar">
+        <div class="flex items-center justify-around w-full max-w-xl">
+            <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">出勤打卡</span>
+            </a>
+            <a href="https://king-newton.github.io/dashboard/leave.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                <div class="app-box bg-gradient-to-br from-amber-400 to-yellow-600 text-white">
+                    <i class="fa-solid fa-table"></i>
+                </div>
+                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">請假單</span>
+            </a>
+            <a href="https://king-newton.github.io/portaly/King-Newton.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                <div class="app-box bg-gradient-to-br from-sky-500 to-blue-700 text-white">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">公司資訊</span>
+            </a>
+            <a href="https://o936157111-ops.github.io/company-calendar/" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                <div class="app-box bg-gradient-to-br from-pink-500 to-rose-700 text-white">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">活動行事曆</span>
+            </a>
+        </div>
+    </nav>
 
 </body>
 </html>
