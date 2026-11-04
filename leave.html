@@ -125,18 +125,21 @@
                 </button>
             </h2>
 
-            <!-- 主管簽核角色模擬 -->
+            <!-- 主管簽核角色連動選擇區 -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">簽核主管姓名：</label>
-                    <input type="text" id="managerName" value="主管代表" class="w-full p-2 rounded-lg border bg-white">
+                    <label class="block font-bold text-slate-700 mb-1">簽核層級：</label>
+                    <select id="managerStep" onchange="updateManagerNameOptions()" class="w-full p-2 rounded-lg border bg-white font-bold text-emerald-700">
+                        <option value="1">第一層主管 (一階審核)</option>
+                        <option value="2">第二層主管 (二階最終核准)</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">簽核層級：</label>
-                    <select id="managerStep" class="w-full p-2 rounded-lg border bg-white font-bold text-emerald-700">
-                        <option value="1">第一層主管（一階審核）</option>
-                        <option value="2">第二層主管（二階最終核准）</option>
+                    <label class="block font-bold text-slate-700 mb-1">簽核主管姓名：</label>
+                    <select id="managerNameSelect" onchange="syncManagerName()" class="w-full p-2 rounded-lg border bg-white font-bold text-slate-700">
+                        <!-- 選項由 JS 自動帶入 -->
                     </select>
+                    <input type="hidden" id="managerName" value="ERIC">
                 </div>
             </div>
 
@@ -169,6 +172,13 @@
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCpazOw8nEAirKT8j4ruNDwwB89KcA_LlmXPAHA7skjIKY2idXA23HyYctylp7aSPXgw/exec";
         const LEAVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv";
 
+        // 主管電話清單（可在此設定對應電話以利 WhatsApp 發送，格式例: 886912345678）
+        const MANAGER_PHONES = {
+            "ERIC": "",        // 一階主管 ERIC
+            "李彥綸": "",      // 二階主管 台北 李彥綸
+            "楊添仰": ""       // 二階主管 台南 楊添仰
+        };
+
         // 頁面載入時自動帶入登入身分與預設日期
         window.addEventListener('DOMContentLoaded', () => {
             const loggedInName = localStorage.getItem('king_newton_emp_name');
@@ -189,9 +199,31 @@
             document.getElementById('endDate').value = todayStr;
             updateDateTime();
 
+            // 初始化主管選單帶入
+            updateManagerNameOptions();
+
             // 讀取 CSV 進行個人請假統計
             fetchPersonalLeaveStats(loggedInName);
         });
+
+        // 依據簽核層級自動切換主管名稱選單
+        function updateManagerNameOptions() {
+            const step = document.getElementById('managerStep').value;
+            const selectEl = document.getElementById('managerNameSelect');
+            selectEl.innerHTML = '';
+
+            if (step === '1') {
+                selectEl.add(new Option("ERIC (一階主管)", "ERIC"));
+            } else {
+                selectEl.add(new Option("李彥綸 (台北主管)", "李彥綸"));
+                selectEl.add(new Option("楊添仰 (台南主管)", "楊添仰"));
+            }
+            syncManagerName();
+        }
+
+        function syncManagerName() {
+            document.getElementById('managerName').value = document.getElementById('managerNameSelect').value;
+        }
 
         // 組合日期與時間並觸發天數計算
         function updateDateTime() {
@@ -226,14 +258,13 @@
             let totalWorkHours = 0;
             let current = new Date(start);
 
-            // 以半小時（30分鐘）為最小單位進行逐段判定與累加工時
             while (current < end) {
                 let next = new Date(current.getTime() + 30 * 60 * 1000);
                 if (next > end) next = end;
 
                 const hours = current.getHours() + current.getMinutes() / 60;
                 
-                // 跳過午休時間段 12:00 (12.0) 至 13:30 (13.5)
+                // 跳過午休 12:00 (12.0) 至 13:30 (13.5)
                 if (!(hours >= 12.0 && hours < 13.5)) {
                     totalWorkHours += (next - current) / (1000 * 60 * 60);
                 }
@@ -241,10 +272,9 @@
                 current = next;
             }
 
-            // 每日工作時數基準為 7.5 小時 (08:30~12:00 為3.5hr，13:30~17:30 為4hr)
+            // 每日工時基準 7.5 小時
             let calculatedDays = totalWorkHours / 7.5;
 
-            // 格式化輸出：四捨五入至半天 (0.5 天) 或精確保留 1 位小數
             if (calculatedDays >= 1) {
                 calculatedDays = Math.round(calculatedDays * 2) / 2;
             } else {
@@ -335,21 +365,26 @@
             }
         }
 
-        // 提交請假單
+        // 提交請假單 + 提示發送 WhatsApp 給 ERIC
         function submitLeave(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.innerText = "傳送中...";
             submitBtn.disabled = true;
 
+            const empName = document.getElementById('empName').value;
+            const leaveType = document.getElementById('leaveType').value;
+            const days = document.getElementById('leaveDays').value;
+            const reason = document.getElementById('leaveReason').value;
+
             const payload = {
                 action: 'submitLeave',
-                name: document.getElementById('empName').value,
-                type: document.getElementById('leaveType').value,
+                name: empName,
+                type: leaveType,
                 startTime: document.getElementById('fullStartTime').value,
                 endTime: document.getElementById('fullEndTime').value,
-                days: document.getElementById('leaveDays').value,
-                reason: document.getElementById('leaveReason').value
+                days: days,
+                reason: reason
             };
 
             fetch(GAS_WEB_APP_URL, {
@@ -359,6 +394,16 @@
             .then(res => res.json())
             .then(res => {
                 alert(`🎉 ${res.message}\n單號：${res.leaveId}`);
+                
+                // WhatsApp 自動通知問詢 (送給 ERIC)
+                const waText = encodeURIComponent(`【請假審核通知】\n同仁：${empName}\n假別：${leaveType}\n天數：${days} 天\n事由：${reason}\n單號：${res.leaveId}\n請至金牛頓系統進行一階簽核。`);
+                const ericPhone = MANAGER_PHONES["ERIC"] || "";
+                
+                if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
+                    const waUrl = ericPhone ? `https://wa.me/${ericPhone}?text=${waText}` : `https://api.whatsapp.com/send?text=${waText}`;
+                    window.open(waUrl, '_blank');
+                }
+
                 document.getElementById('leaveForm').reset();
                 
                 const loggedInName = localStorage.getItem('king_newton_emp_name');
@@ -404,7 +449,7 @@
                                     <span class="px-2 py-1 rounded bg-slate-100 text-slate-600 ml-1">二階: ${item.step2Status}</span>
                                 </td>
                                 <td class="p-3 text-center">
-                                    <button onclick="approveLeave('${item.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg shadow text-xs">
+                                    <button onclick="approveLeave('${item.id}', '${item.name}', '${item.type}', '${item.days}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg shadow text-xs">
                                         ✍️ 同意並蓋章
                                     </button>
                                 </td>
@@ -416,13 +461,13 @@
                 });
         }
 
-        // 主管執行簽核
-        function approveLeave(leaveId) {
+        // 主管執行簽核 + 選擇/提示發送 WhatsApp 給下一階段主管
+        function approveLeave(leaveId, applicantName, leaveType, leaveDays) {
             const managerName = document.getElementById('managerName').value;
             const step = parseInt(document.getElementById('managerStep').value);
 
             if (!managerName) {
-                alert("請先輸入簽核主管姓名！");
+                alert("請先確認簽核主管姓名！");
                 return;
             }
 
@@ -442,6 +487,23 @@
             .then(res => res.json())
             .then(res => {
                 alert(`✅ 簽核完成！${res.message}`);
+
+                // 如果是一階簽核核准，詢問要傳送 WhatsApp 給哪位二階主管（李彥綸 或 楊添仰）
+                if (step === 1) {
+                    const targetManager = prompt("一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)", "1");
+                    let nextManagerName = "";
+                    
+                    if (targetManager === "1") nextManagerName = "李彥綸";
+                    else if (targetManager === "2") nextManagerName = "楊添仰";
+
+                    if (nextManagerName) {
+                        const waText = encodeURIComponent(`【請假二階簽核通知】\n一階主管 ${managerName} 已核准。\n申請同仁：${applicantName}\n假別：${leaveType} (${leaveDays}天)\n單號：${leaveId}\n請 ${nextManagerName} 主管至系統進行二階最終核准。`);
+                        const nextPhone = MANAGER_PHONES[nextManagerName] || "";
+                        const waUrl = nextPhone ? `https://wa.me/${nextPhone}?text=${waText}` : `https://api.whatsapp.com/send?text=${waText}`;
+                        window.open(waUrl, '_blank');
+                    }
+                }
+
                 loadPendingLeaves();
             });
         }
