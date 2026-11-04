@@ -30,7 +30,7 @@
             justify-content: flex-start;
             width: 100%;
             padding: 12px;
-            padding-bottom: 200px; /* 確保手機底部有足夠空間，絕不被 Dock 欄遮擋 */
+            padding-bottom: 100px;
         }
 
         @media (min-width: 768px) {
@@ -71,15 +71,25 @@
             }
         }
 
-        /* Dock 欄 */
-        #dock-bar {
+        /* 🌟 自動隱藏 Dock 容器 */
+        #dock-wrapper {
             position: fixed;
             bottom: 12px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 35;
+            z-index: 40;
             width: calc(100% - 16px);
             max-width: 540px;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 隱藏狀態：向下推開並隱藏 Dock */
+        #dock-wrapper.dock-hidden {
+            transform: translate(-50%, calc(100% - 24px));
+        }
+
+        /* Dock 欄本體 */
+        #dock-bar {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -89,12 +99,37 @@
             padding: 8px 6px;
         }
 
+        /* 展開/收合切換按鈕（箭頭） */
+        #dock-toggle-btn {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 166, 0, 0.9);
+            color: #ffffff;
+            width: 42px;
+            height: 24px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.1);
+            transition: background 0.2s, transform 0.2s;
+            z-index: 41;
+        }
+        #dock-toggle-btn:hover {
+            background: #008f00;
+        }
+
         @media (min-width: 768px) {
-            #dock-bar {
+            #dock-wrapper {
                 position: static !important;
                 transform: none !important;
                 width: 100% !important;
                 max-width: 100% !important;
+            }
+            #dock-bar {
                 background: #ffffff !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
@@ -103,6 +138,9 @@
                 border-radius: 1rem !important;
                 padding: 1.5rem !important;
                 margin-top: 1.25rem !important;
+            }
+            #dock-toggle-btn {
+                display: none !important; /* 電腦版不隱藏箭頭 */
             }
         }
     </style>
@@ -134,33 +172,40 @@
                     <iframe src="https://o936157111-ops.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-[500px] md:h-[600px] rounded-xl border-0"></iframe>
                 </div>
 
-                <!-- 🌟 企業專屬 Dock 快捷列 -->
-                <div id="dock-bar">
-                    <div class="flex items-center justify-around gap-1">
-                        <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
-                                <i class="fa-solid fa-location-dot"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">出勤打卡</span>
-                        </a>
-                        <a href="https://king-newton.github.io/dashboard/leave.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-amber-400 to-yellow-600 text-white">
-                                <i class="fa-solid fa-table"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">請假單</span>
-                        </a>
-                        <a href="https://king-newton.github.io/portaly/King-Newton.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-sky-500 to-blue-700 text-white">
-                                <i class="fa-solid fa-building"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">公司資訊</span>
-                        </a>
-                        <a href="https://o936157111-ops.github.io/company-calendar/" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                            <div class="app-box bg-gradient-to-br from-pink-500 to-rose-700 text-white">
-                                <i class="fa-solid fa-calendar-days"></i>
-                            </div>
-                            <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">活動行事曆</span>
-                        </a>
+                <!-- 🌟 企業專屬 Dock 快捷列（具備 3 秒自動隱藏與箭頭控制） -->
+                <div id="dock-wrapper">
+                    <!-- 展開/收合控制按鈕 -->
+                    <button id="dock-toggle-btn" onclick="toggleDock(event)" title="展開/收合選單">
+                        <i id="dock-icon" class="fa-solid fa-chevron-up text-xs"></i>
+                    </button>
+
+                    <div id="dock-bar">
+                        <div class="flex items-center justify-around gap-1">
+                            <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                                <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">出勤打卡</span>
+                            </a>
+                            <a href="https://king-newton.github.io/dashboard/leave.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                                <div class="app-box bg-gradient-to-br from-amber-400 to-yellow-600 text-white">
+                                    <i class="fa-solid fa-table"></i>
+                                </div>
+                                <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">請假單</span>
+                            </a>
+                            <a href="https://king-newton.github.io/portaly/King-Newton.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                                <div class="app-box bg-gradient-to-br from-sky-500 to-blue-700 text-white">
+                                    <i class="fa-solid fa-building"></i>
+                                </div>
+                                <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">公司資訊</span>
+                            </a>
+                            <a href="https://o936157111-ops.github.io/company-calendar/" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
+                                <div class="app-box bg-gradient-to-br from-pink-500 to-rose-700 text-white">
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                </div>
+                                <span class="app-label text-[10px] md:text-sm text-slate-700 font-semibold mt-1">活動行事曆</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -168,5 +213,37 @@
         </div>
     </div>
 
+    <script>
+        const dockWrapper = document.getElementById('dock-wrapper');
+        const dockIcon = document.getElementById('dock-icon');
+        let hideTimer = null;
+
+        // 手動開關 Dock 欄
+        function toggleDock(e) {
+            if (e) e.stopPropagation();
+            const isHidden = dockWrapper.classList.contains('dock-hidden');
+            
+            if (isHidden) {
+                showDock();
+            } else {
+                hideDock();
+            }
+        }
+
+        function hideDock() {
+            dockWrapper.classList.add('dock-hidden');
+            dockIcon.className = 'fa-solid fa-chevron-up text-xs';
+        }
+
+        function showDock() {
+            dockWrapper.classList.remove('dock-hidden');
+            dockIcon.className = 'fa-solid fa-chevron-down text-xs';
+        }
+
+        // 開啟網頁 3 秒後自動向下隱藏
+        hideTimer = setTimeout(() => {
+            hideDock();
+        }, 3000);
+    </script>
 </body>
 </html>
