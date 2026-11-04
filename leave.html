@@ -105,7 +105,7 @@
                 <!-- 第三列：請假總天數/時數 -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">請假總天數/時數 (自動計算)</label>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">請假總天數 (已扣除 12:00-13:30 午休)</label>
                         <input type="number" id="leaveDays" step="0.5" placeholder="自動計算天數" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm font-bold text-emerald-700 outline-none focus:border-emerald-600">
                     </div>
                 </div>
@@ -193,7 +193,7 @@
             fetchPersonalLeaveStats(loggedInName);
         });
 
-        // 組合日期與時間並自動計算天數
+        // 組合日期與時間並觸發天數計算
         function updateDateTime() {
             const startDate = document.getElementById('startDate').value;
             const startTime = document.getElementById('startTime').value;
@@ -208,14 +208,14 @@
             document.getElementById('fullStartTime').value = fullStart;
             document.getElementById('fullEndTime').value = fullEnd;
 
-            calculateLeaveDuration(fullStart, fullEnd);
+            calculateLeaveDuration(startDate, startTime, endDate, endTime);
         }
 
-        // 自動計算請假時間（開始至結束天數）
-        function calculateLeaveDuration(startVal, endVal) {
+        // 精確計算請假時間（自動扣除 12:00~13:30 中午休息時間）
+        function calculateLeaveDuration(sDateStr, sTimeStr, eDateStr, eTimeStr) {
             const daysInput = document.getElementById('leaveDays');
-            const start = new Date(startVal);
-            const end = new Date(endVal);
+            const start = new Date(`${sDateStr}T${sTimeStr}`);
+            const end = new Date(`${eDateStr}T${eTimeStr}`);
 
             if (end <= start) {
                 alert("結束時間必須晚於開始時間！");
@@ -223,13 +223,32 @@
                 return;
             }
 
-            const diffHours = (end - start) / (1000 * 60 * 60);
-            let calculatedDays = diffHours / 24;
+            let totalWorkHours = 0;
+            let current = new Date(start);
 
+            // 以半小時（30分鐘）為最小單位進行逐段判定與累加工時
+            while (current < end) {
+                let next = new Date(current.getTime() + 30 * 60 * 1000);
+                if (next > end) next = end;
+
+                const hours = current.getHours() + current.getMinutes() / 60;
+                
+                // 跳過午休時間段 12:00 (12.0) 至 13:30 (13.5)
+                if (!(hours >= 12.0 && hours < 13.5)) {
+                    totalWorkHours += (next - current) / (1000 * 60 * 60);
+                }
+
+                current = next;
+            }
+
+            // 每日工作時數基準為 7.5 小時 (08:30~12:00 為3.5hr，13:30~17:30 為4hr)
+            let calculatedDays = totalWorkHours / 7.5;
+
+            // 格式化輸出：四捨五入至半天 (0.5 天) 或精確保留 1 位小數
             if (calculatedDays >= 1) {
-                calculatedDays = Math.ceil(calculatedDays * 2) / 2;
+                calculatedDays = Math.round(calculatedDays * 2) / 2;
             } else {
-                calculatedDays = Math.round((diffHours / 8) * 10) / 10;
+                calculatedDays = Math.round(calculatedDays * 10) / 10;
             }
 
             daysInput.value = calculatedDays;
