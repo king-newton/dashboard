@@ -86,7 +86,7 @@
                     </div>
                 </div>
 
-                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 (24小時制) -->
+                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 (24小時制，預設 08:30 與 18:00) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">開始日期</label>
@@ -102,15 +102,15 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">結束時間 (24小時制)</label>
-                        <input type="time" id="endTime" value="17:30" step="60" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
+                        <input type="time" id="endTime" value="18:00" step="60" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                 </div>
 
-                <!-- 第三列：請假總天數 -->
+                <!-- 第三列：請假總天數 (恢復可手動輸入/修改) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">請假總天數 (以一天 8 小時計算，扣除 12:00-13:30 午休)</label>
-                        <input type="number" name="days" id="leaveDays" step="0.5" readonly placeholder="自動計算天數" required class="w-full bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm font-bold text-emerald-700 outline-none">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">請假總天數 (以一天 8 小時計算，可自行微調)</label>
+                        <input type="number" name="days" id="leaveDays" step="0.5" placeholder="可自行修改天數" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm font-bold text-emerald-700 outline-none focus:border-emerald-600">
                     </div>
                 </div>
 
@@ -208,12 +208,12 @@
             document.getElementById('empNameDisplay').value = loggedInName;
             document.getElementById('empName').value = loggedInName;
 
-            // 預設帶入「下一個工作日」
+            // 預設帶入「下一個工作日」，時間預設 08:30 與 18:00
             const defaultWorkday = getNextWorkday(new Date());
             document.getElementById('startDate').value = defaultWorkday;
             document.getElementById('endDate').value = defaultWorkday;
             document.getElementById('startTime').value = "08:30";
-            document.getElementById('endTime').value = "17:30";
+            document.getElementById('endTime').value = "18:00";
             updateDateTime();
 
             updateManagerNameOptions();
@@ -255,7 +255,7 @@
             calculateLeaveDuration(startDate, startTime, endDate, endTime);
         }
 
-        // 精確計算請假天數 (排除週末、扣除午休、以一天 8 小時計算)
+        // 計算請假天數 (排除週末、扣除 12:00-13:30 午休、以 08:30-18:00 間 8 小時為 1 天)
         function calculateLeaveDuration(sDateStr, sTimeStr, eDateStr, eTimeStr) {
             const daysInput = document.getElementById('leaveDays');
             
@@ -284,8 +284,8 @@
                 const hours = current.getHours() + current.getMinutes() / 60;
 
                 const isWeekday = (dayOfWeek !== 0 && dayOfWeek !== 6);
-                const isWorkingHours = (hours >= 8.5 && hours < 17.5);
-                const isLunchBreak = (hours >= 12.0 && hours < 13.5);
+                const isWorkingHours = (hours >= 8.5 && hours < 18.0); // 上班區間 08:30 ~ 18:00
+                const isLunchBreak = (hours >= 12.0 && hours < 13.5);  // 午休 12:00 ~ 13:30
 
                 if (isWeekday && isWorkingHours && !isLunchBreak) {
                     totalWorkHours += (next - current) / (1000 * 60 * 60);
@@ -294,7 +294,7 @@
                 current = next;
             }
 
-            // 改為一天 8 小時基準計算
+            // 一天 8 工作小時為基準
             let calculatedDays = totalWorkHours / 8;
 
             if (calculatedDays >= 1) {
@@ -380,7 +380,6 @@
             }
         }
 
-        // 表單送出前的準備
         function prepareSubmit() {
             submitted = true;
             const submitBtn = document.getElementById('submitBtn');
@@ -388,7 +387,6 @@
             submitBtn.disabled = true;
         }
 
-        // 表單經由 iframe 成功傳送至 GAS 後的回調
         function handleFormSuccess() {
             const empName = document.getElementById('empName').value;
             const leaveType = document.getElementById('leaveType').value;
@@ -397,7 +395,6 @@
 
             alert(`🎉 假單已成功送出！`);
 
-            // WhatsApp 自動通知問詢 (送給 ERIC)
             const waText = encodeURIComponent(`【請假審核通知】\n同仁：${empName}\n假別：${leaveType}\n天數：${days} 天\n事由：${reason}\n請至金牛頓系統進行一階簽核。`);
             const ericPhone = MANAGER_PHONES["ERIC"] || "";
             
@@ -416,7 +413,7 @@
             document.getElementById('startDate').value = defaultWorkday;
             document.getElementById('endDate').value = defaultWorkday;
             document.getElementById('startTime').value = "08:30";
-            document.getElementById('endTime').value = "17:30";
+            document.getElementById('endTime').value = "18:00";
             updateDateTime();
 
             fetchPersonalLeaveStats(loggedInName);
@@ -427,7 +424,6 @@
             submitted = false;
         }
 
-        // 主管載入待審清單
         function loadPendingLeaves() {
             const tbody = document.getElementById('pendingTableBody');
             tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">正在查詢待審核假單...</td></tr>`;
@@ -460,7 +456,6 @@
                 });
         }
 
-        // 主管執行簽核
         function approveLeave(leaveId, applicantName, leaveType, leaveDays) {
             const managerName = document.getElementById('managerName').value;
             const step = parseInt(document.getElementById('managerStep').value);
