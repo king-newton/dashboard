@@ -42,7 +42,7 @@
         <div id="section-apply" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <h2 class="text-lg font-bold text-slate-800 border-b pb-3">填寫請假單</h2>
             
-            <form id="leaveForm" action="https://script.google.com/macros/s/AKfycbwCpazOw8nEAirKT8j4ruNDwwB89KcA_LlmXPAHA7skjIKY2idXA23HyYctylp7aSPXgw/exec" method="POST" target="hidden_iframe" onsubmit="prepareSubmit()" class="space-y-4">
+            <form id="leaveForm" action="https://script.google.com/macros/s/AKfycby5eWga0igixQ-bkyFwx1f1-t455YhWClHs7NKOL4YUkyD-bZjdQE8YYwT5eafa3ELY-w/exec" method="POST" target="hidden_iframe" onsubmit="prepareSubmit()" class="space-y-4">
                 
                 <!-- 傳給 GAS 的隱藏參數 -->
                 <input type="hidden" name="action" value="submitLeave">
@@ -86,7 +86,7 @@
                     </div>
                 </div>
 
-                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 (24小時制，預設 08:30 與 18:00) -->
+                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 (預設 08:30 與 18:00) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">開始日期</label>
@@ -106,7 +106,7 @@
                     </div>
                 </div>
 
-                <!-- 第三列：請假總天數 (恢復可手動輸入/修改) -->
+                <!-- 第三列：請假總天數 (可自行微調) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
                         <label class="block text-xs font-semibold text-slate-600 mb-1">請假總天數 (以一天 8 小時計算，可自行微調)</label>
@@ -173,7 +173,7 @@
     </div>
 
     <script>
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCpazOw8nEAirKT8j4ruNDwwB89KcA_LlmXPAHA7skjIKY2idXA23HyYctylp7aSPXgw/exec";
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5eWga0igixQ-bkyFwx1f1-t455YhWClHs7NKOL4YUkyD-bZjdQE8YYwT5eafa3ELY-w/exec";
         const LEAVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv";
 
         const MANAGER_PHONES = {
