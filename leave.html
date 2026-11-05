@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>公司線上請假與雙主管簽核系統</title>
+    <title>線上請假與簽核系統</title>
     <!-- 網頁瀏覽器分頁小圖示 (Favicon) -->
     <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
     <!-- Tailwind CSS CDN -->
@@ -17,10 +17,10 @@
 
     <div class="max-w-4xl mx-auto space-y-8">
         
-        <!-- 標頭 -->
+        <!-- 標頭 (簡化標題文字避免手機版折行) -->
         <div class="text-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <h1 class="text-2xl font-bold text-slate-800 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-signature text-emerald-600"></i> 公司請假與簽核管理入口
+            <h1 class="text-xl md:text-2xl font-bold text-slate-800 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-signature text-emerald-600"></i> 線上請假與簽核系統
             </h1>
             <p class="text-sm text-slate-500 mt-1">串聯 Google 試算表 · 個人歷年請假統計 · 雙主管電子印章簽核</p>
         </div>
@@ -68,9 +68,9 @@
                     </div>
                 </div>
 
-                <!-- 個人歷史請假統計資訊顯示區 -->
+                <!-- 個人歷史請假統計資訊顯示區 (無紀錄時自動隱藏) -->
                 <div>
-                    <div id="leaveSummaryCard" class="w-full bg-emerald-50 text-emerald-900 p-3 rounded-xl border border-emerald-200 text-xs space-y-1">
+                    <div id="leaveSummaryCard" class="w-full bg-emerald-50 text-emerald-900 p-3 rounded-xl border border-emerald-200 text-xs space-y-1 hidden">
                         <div class="flex justify-between items-center font-bold">
                             <span>載入個人統計資料中...</span>
                             <i class="fa-solid fa-spinner fa-spin text-emerald-600"></i>
@@ -78,23 +78,23 @@
                     </div>
                 </div>
 
-                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 -->
+                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 (改用 24 小時制) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">開始日期</label>
                         <input type="date" id="startDate" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">開始時間</label>
-                        <input type="time" id="startTime" value="08:30" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">開始時間 (24小時制)</label>
+                        <input type="time" id="startTime" value="08:30" step="60" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">結束日期</label>
                         <input type="date" id="endDate" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">結束時間</label>
-                        <input type="time" id="endTime" value="17:30" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">結束時間 (24小時制)</label>
+                        <input type="time" id="endTime" value="17:30" step="60" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                 </div>
 
@@ -284,7 +284,7 @@
             daysInput.value = calculatedDays;
         }
 
-        // 讀取 CSV 資料並統計該同仁請假天數
+        // 讀取 CSV 資料並統計該同仁請假天數 (無紀錄時直接隱藏區塊)
         async function fetchPersonalLeaveStats(name) {
             const summaryDiv = document.getElementById('leaveSummaryCard');
 
@@ -331,21 +331,16 @@
                             ${detailHtml}
                         </div>
                     `;
+                    summaryDiv.classList.remove('hidden'); // 有紀錄時顯示
                 } else {
-                    summaryDiv.innerHTML = `
-                        <div class="font-bold text-slate-600">
-                            👤 ${name} 目前尚無歷史請假紀錄
-                        </div>
-                    `;
+                    summaryDiv.innerHTML = '';
+                    summaryDiv.classList.add('hidden'); // 無紀錄時完全隱藏
                 }
 
             } catch (error) {
                 console.error("讀取請假統計失敗:", error);
-                summaryDiv.innerHTML = `
-                    <div class="text-slate-500 font-bold">
-                        👤 ${name} （歷史紀錄連線查詢中）
-                    </div>
-                `;
+                summaryDiv.innerHTML = '';
+                summaryDiv.classList.add('hidden'); // 讀取失敗時也隱藏，保持畫面乾淨
             }
         }
 
