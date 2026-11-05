@@ -138,10 +138,10 @@
 <!-- 主管/全員即時總表按鈕專區 -->
 <div class="card" style="text-align: center;">
     <h3 style="margin-top: 0; color: #333; font-size: 18px;">📋 出勤紀錄查詢</h3>
-    <p style="font-size: 14px; color: #666;">點擊下方按鈕即可隨時在新視窗查看出勤總表圖片檔：</p>
-    <!-- 已將格式從 format=pdf 改為 format=jpeg -->
-    <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=jpeg" target="_blank" class="sheet-btn">
-        🖼️ 開啟即時出勤總表圖片檔
+    <p style="font-size: 14px; color: #666;">點擊下方按鈕即可隨時在新視窗查看出勤總表線上檢視：</p>
+    <!-- 已改為線上檢視模式 -->
+    <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/edit?usp=sharing" target="_blank" class="sheet-btn">
+        📋 開啟即時出勤總表線上檢視
     </a>
 </div>
 
@@ -255,12 +255,12 @@
         .then(response => {
             document.getElementById("status").innerText = "🎉 送出成功！資料已存入雲端試算表。";
             
-            // 送出成功後自動開啟 JPG 圖片格式的出勤總表
-            window.open('https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=jpeg', '_blank');
+            // 送出成功後自動開啟線上出勤總表檢視[cite: 2]
+            window.open('https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/edit?usp=sharing', '_blank');
 
             document.getElementById("checkinForm").reset();
             
-            // 重新將登入者姓名回填（因為表單 reset 會清空欄位）
+            // 重新將登入者姓名回填（因為表單 reset 會清空欄位）[cite: 2]
             const loggedInName = localStorage.getItem('king_newton_emp_name');
             document.getElementById('empNameDisplay').value = loggedInName;
             document.getElementById('empName').value = loggedInName;
