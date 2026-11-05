@@ -32,7 +32,7 @@
             color: #ffffff;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             box-shadow: 0 4px 12px rgba(0, 166, 0, 0.2);
             z-index: 50;
             padding: 0 16px;
@@ -126,17 +126,26 @@
         </div>
     </div>
 
-    <!-- 2. 頂部固定 Header (僅保留雙 LOGO，支援長按 2 秒清除登入重設) -->
+    <!-- 2. 頂部固定 Header (雙 LOGO 居中 + 右側 EXIT 登出按鈕) -->
     <header id="top-header">
-        <div id="logout-trigger" class="flex items-center justify-center w-full max-w-xl px-2 cursor-pointer" title="長按 2 秒可清除登入狀態重新驗證">
-            <div class="flex items-center gap-3">
+        <!-- 佔位用（確保置中平衡） -->
+        <div class="w-16 md:w-20"></div>
+
+        <!-- 置中雙 LOGO 區塊 -->
+        <div id="logout-trigger" class="flex items-center justify-center cursor-pointer" title="長按 2 秒可清除登入狀態重新驗證">
+            <div class="flex items-center gap-2 md:gap-3">
                 <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" class="h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
                 <img src="https://king-newton.github.io/dashboard/logo-standard.png" alt="Logo" class="h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
             </div>
         </div>
+
+        <!-- 右側 EXIT 登出按鈕 -->
+        <button onclick="logoutSystem()" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm">
+            <i class="fa-solid fa-right-from-bracket"></i> EXIT
+        </button>
     </header>
 
-    <!-- 3. 中間嵌入整頁行事曆 (已更新為正式網域) -->
+    <!-- 3. 中間嵌入整頁行事曆 -->
     <main id="middle-container">
         <iframe src="https://king-newton.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-full border-0"></iframe>
     </main>
@@ -226,18 +235,23 @@
             }
         }
 
+        // 主動點擊 EXIT 按鈕登出
+        function logoutSystem() {
+            if (confirm("確定要登出系統並清除目前的登入身分嗎？")) {
+                localStorage.removeItem('king_newton_auth');
+                localStorage.removeItem('king_newton_emp_id');
+                localStorage.removeItem('king_newton_emp_name');
+                location.reload();
+            }
+        }
+
         // 長按頂部 LOGO 2 秒清除登入紀錄並重整
         let pressTimer = null;
         const logoutTrigger = document.getElementById('logout-trigger');
 
         const startPress = () => {
             pressTimer = setTimeout(() => {
-                if (confirm("是否要清除目前的登入身分並重新驗證？")) {
-                    localStorage.removeItem('king_newton_auth');
-                    localStorage.removeItem('king_newton_emp_id');
-                    localStorage.removeItem('king_newton_emp_name');
-                    location.reload();
-                }
+                logoutSystem();
             }, 2000); // 2秒
         };
 
