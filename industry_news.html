@@ -10,7 +10,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-4 md:p-6 text-slate-800">
 
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto space-y-6">
         
         <!-- 頂部標頭與返回按鈕 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -20,7 +20,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold text-slate-800 m-0">射出成型產業全景數據與全方位實戰觀測站</h1>
-                    <p class="text-xs text-slate-500 m-0 mt-0.5">全量知識收錄 · 產業大盤與財報數據 · 舊機改裝 ROI · AI 智造閉環 · 微發泡減碳 · 每日自動同步</p>
+                    <p class="text-xs text-slate-500 m-0 mt-0.5">大盤產值 · 頂尖大廠生態 · 舊機改裝 ROI · AI 智造閉環 · 微發泡減碳 · 來源透明公開 · 每日自動同步</p>
                 </div>
             </div>
             <a href="index.html" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm text-decoration-none">
@@ -52,7 +52,7 @@
             </div>
         </div>
 
-        <!-- 🗂️ 全量分類快篩導航列（將所有寶貴觀點與分類完整納入） -->
+        <!-- 🗂️ 全量分類快篩導航列（完整收錄所有討論面向） -->
         <div class="flex flex-wrap gap-2" id="filter-buttons">
             <button onclick="filterNews('all', this)" class="nav-btn bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition">全產業總覽</button>
             <button onclick="filterNews('產業大盤', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">📈 產業大盤與出口數據</button>
@@ -73,14 +73,14 @@
         <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="col-span-1 md:col-span-2 text-center py-12 text-slate-400 font-bold">
                 <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
-                <p>正在載入全量知識庫、產業硬數據與即時動態...（每日自動同步）</p>
+                <p>正在載入零遺漏全量知識庫、產業硬數據與即時動態...（每日自動同步）</p>
             </div>
         </div>
 
     </div>
 
     <script>
-        // 📚 100% 全量匯集知識庫（零遺漏：大盤、台中精機、震雄、四大廠、百塑立式、舊機改造、P-t曲線、AI閉環、微發泡減碳）
+        // 📚 100% 零遺漏黃金級全量知識庫（整合所有大盤、各大廠生態、改裝 ROI、P-t試模、AI、減碳實戰）
         const masterKnowledgeDatabase = [
             // --- 📈 產業大盤與出口數據 ---
             {
@@ -255,7 +255,7 @@
 
         async function fetchIndustryNews() {
             try {
-                // 🌟 加入時間戳記參數（&t=...），強制每天、每次重新整理時向 Google 請求最新 RSS，不使用舊快取
+                // 🌟 強制每天、每次重新整理時向 Google 請求最新 RSS（加時間戳記避開快取）
                 const cacheBuster = new Date().getTime();
                 const searchQuery = encodeURIComponent('射出成型機 OR 台中精機 OR 震雄集團 OR 富強鑫 OR 全立發 OR 華嶸 OR 樺欽 OR 銷售噸數');
                 const rssUrl = `https://news.google.com/rss/search?q=${searchQuery}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
