@@ -21,7 +21,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 🌟 頂部固定區塊 */
+        /* 🌟 頂部固定區塊：改為 space-side，讓 LOGO 靠左、EXIT 靠右，絕不重疊 */
         #top-header {
             position: fixed;
             top: 0;
@@ -126,21 +126,18 @@
         </div>
     </div>
 
-    <!-- 2. 頂部固定 Header (雙 LOGO 居中 + 右側 EXIT 登出按鈕) -->
+    <!-- 2. 頂部固定 Header (左側 LOGO 靠齊 + 右側 EXIT 按鈕，手機版完美適配) -->
     <header id="top-header">
-        <!-- 佔位用（確保置中平衡） -->
-        <div class="w-16 md:w-20"></div>
-
-        <!-- 置中雙 LOGO 區塊 -->
-        <div id="logout-trigger" class="flex items-center justify-center cursor-pointer" title="長按 2 秒可清除登入狀態重新驗證">
-            <div class="flex items-center gap-2 md:gap-3">
+        <!-- 左側 LOGO 區塊（支援長按 2 秒清除登入重設） -->
+        <div id="logout-trigger" class="flex items-center cursor-pointer py-1" title="長按 2 秒可清除登入狀態重新驗證">
+            <div class="flex items-center gap-2">
                 <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" class="h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
                 <img src="https://king-newton.github.io/dashboard/logo-standard.png" alt="Logo" class="h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
             </div>
         </div>
 
         <!-- 右側 EXIT 登出按鈕 -->
-        <button onclick="logoutSystem()" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm">
+        <button onclick="logoutSystem()" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm">
             <i class="fa-solid fa-right-from-bracket"></i> EXIT
         </button>
     </header>
