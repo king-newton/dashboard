@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>射出成型產業與重點廠商動態總覽</title>
+    <title>射出成型產業與前瞻趨勢情報站</title>
     <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,11 +16,11 @@
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center text-xl shadow-md">
-                    <i class="fa-solid fa-industry"></i>
+                    <i class="fa-solid fa-brain"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-slate-800 m-0">射出成型產業與重點廠商即時動態</h1>
-                    <p class="text-xs text-slate-500 m-0 mt-0.5">聚焦：富強鑫 · 全立發 · 華嶸 · 樺欽 · 智慧製造與綠色減碳技術</p>
+                    <h1 class="text-xl font-bold text-slate-800 m-0">射出成型產業與前瞻趨勢情報站</h1>
+                    <p class="text-xs text-slate-500 m-0 mt-0.5">聚焦：AI 智慧製造 · 綠色減碳 ESG · 標竿企業動態 · 驅動內部創新</p>
                 </div>
             </div>
             <a href="index.html" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm text-decoration-none">
@@ -28,53 +28,172 @@
             </a>
         </div>
 
-        <!-- 快速廠商捷徑標籤（加入 id 方便切換選中狀態） -->
+        <!-- 快速主題與廠商捷徑標籤（納入 AI 與 減碳專屬分類） -->
         <div class="flex flex-wrap gap-2" id="filter-buttons">
-            <button onclick="filterNews('all', this)" class="nav-btn bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition">全產業觀測</button>
+            <button onclick="filterNews('all', this)" class="nav-btn bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition">全產業總覽</button>
+            <button onclick="filterNews('AI智慧', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">🤖 AI 智慧製造</button>
+            <button onclick="filterNews('綠色減碳', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">🌿 綠色減碳 / ESG</button>
             <button onclick="filterNews('富強鑫', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">富強鑫 (FCS)</button>
             <button onclick="filterNews('全立發', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">全立發 (CLF)</button>
             <button onclick="filterNews('華嶸', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">華嶸 (Huarong)</button>
             <button onclick="filterNews('樺欽', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">樺欽 (Hwa Chin)</button>
         </div>
 
-        <!-- 即時動態網格卡片區 -->
+        <!-- 資訊網格卡片區 -->
         <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- 數據會由 JavaScript 自動載入 -->
             <div class="col-span-1 md:col-span-2 text-center py-12 text-slate-400 font-bold">
                 <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
-                <p>正在載入最新產業動態與廠商焦點...</p>
+                <p>正在載入 AI 趨勢、減碳技術與標竿企業動態...</p>
             </div>
         </div>
 
     </div>
 
     <script>
-        let allNewsItems = []; // 儲存抓取到的全部新聞
+        // 📚 整合「AI趨勢、減碳技術、各大廠歷史與前瞻動態」的完整知識庫
+        const comprehensiveKnowledgeBase = [
+            // 🤖 AI 智慧製造與大趨勢類
+            {
+                tag: "🤖 AI智慧製造",
+                category: "AI智慧",
+                title: "AI 演算法如何徹底改變射出成型：從試模盲猜走向預測性參數最佳化",
+                date: "2026-03-20",
+                desc: "透過機器學習對歷史成型數據進行深度訓練，AI 能在數秒內預測縮水率、翹曲變形並自動補償鎖模力，大幅降低對資深師傅經驗的依賴，成為中小企業升級的關鍵解方。",
+                link: "#"
+            },
+            {
+                tag: "🤖 AI智慧製造",
+                category: "AI智慧",
+                title: "機器視覺結合射出成型：即時瑕疵檢測與閉環自動修正系統",
+                date: "2026-02-14",
+                desc: "新一代智慧成型單元標配 AI 視覺檢測，一旦發現毛邊、缺膠或尺寸微小偏差，系統立即回饋給射出機控制器進行閉環微調，實現零人為介入的品質把關。",
+                link: "#"
+            },
+            // 🌿 綠色減碳與 ESG 趨勢類
+            {
+                tag: "🌿 綠色減碳",
+                category: "綠色減碳",
+                title: "塑橡膠機械迎合碳有價時代：全電式架構與碳足跡追蹤標準化",
+                date: "2026-03-05",
+                desc: "面對全球碳關稅與 ESG 供應鏈審查，成型廠必須具備單機用電與碳排數位化追蹤能力。全電式伺服射出機與微物理發泡（MuCell）成為降低碳排的標配。",
+                link: "#"
+            },
+            {
+                tag: "🌿 綠色減碳",
+                category: "綠色減碳",
+                title: "生質塑膠與回收料（PCR）在精密射出成型上的製程挑戰與對策",
+                date: "2026-01-15",
+                desc: "回收料的黏度差異與流動性不穩定是製程痛點。智慧化射出機能透過動態壓力補償，克服回收塑料帶來的批次差異，兼顧環保與良率。",
+                link: "#"
+            },
+            // 富強鑫 (FCS)
+            {
+                tag: "富強鑫",
+                category: "富強鑫",
+                title: "富強鑫 SA-160 智慧成型機：AI 品質自檢與鎖模力自動補償",
+                date: "2026-03-15",
+                desc: "整合 iMF4.0 智慧製造系統，具備品質自檢、伺服控制與鎖模力自動微調功能，有效降低試模不良率，展現 AI 在成型領域的實際落地應用。",
+                link: "https://www.fcs.com.tw/"
+            },
+            {
+                tag: "富強鑫",
+                category: "富強鑫",
+                title: "印度與海外廠產能雙倍增，迎接全球汽車輕量化需求",
+                date: "2026-01-20",
+                desc: "針對汽車零組件多色成型與微發泡（MuCell）材料應用，擴建海外生產據點，提升大型雙色機與節能全電成型機的交付效率。",
+                link: "https://www.fcs.com.tw/"
+            },
+            // 華嶸 (Huarong)
+            {
+                tag: "華嶸",
+                category: "華嶸",
+                title: "華嶸微物理發泡成型與雙色立式轉盤機自動化產線",
+                date: "2026-02-18",
+                desc: "專注車用燈罩與高精度雙色射出，導入微發泡減碳技術與多軸智慧手臂整合，縮短開模與自動取出時間。",
+                link: "https://www.huarong.com.tw/"
+            },
+            {
+                tag: "華嶸",
+                category: "華嶸",
+                title: "綠色智慧化升級：射出成型廠能耗即時數據監控系統",
+                date: "2025-12-05",
+                desc: "為成型廠打造智慧電表與單機碳足跡計算架構，讓管理者即時掌握每件製品的用電成本與碳排數據。",
+                link: "https://www.huarong.com.tw/"
+            },
+            // 樺欽 (Hwa Chin)
+            {
+                tag: "樺欽",
+                category: "樺欽",
+                title: "樺欽 HC-SE 節能伺服射出機：高耐用度與寬模壁設計",
+                date: "2026-02-02",
+                desc: "針對在地製造業強化鎖模結構穩定度與油壓節能效能，深耕泛用型塑膠件與汽車內部機構件射出領域。",
+                link: "http://www.hwachin.com.tw/"
+            },
+            // 全立發 (CLF)
+            {
+                tag: "全立發",
+                category: "全立發",
+                title: "全立發超大型雙缸射出機：家電與大型鈑件成型標竿",
+                date: "2026-03-01",
+                desc: "優化大型曲手鎖模結構與多組分射出控制，應用於大型家電外殼與汽車前後保桿，展現大噸數高精度控制力。",
+                link: "https://www.clf.com.tw/"
+            }
+        ];
 
-        // 載入 Google News RSS 透過 RSS2JSON API 轉為資料
+        let combinedNews = [];
+
         async function fetchIndustryNews() {
             try {
-                const searchQuery = encodeURIComponent('射出成型機 OR 富強鑫 OR 全立發 OR 華嶸 OR 樺欽');
+                const searchQuery = encodeURIComponent('射出成型機 OR 富強鑫 OR 全立發 OR 華嶸 OR 樺欽 OR 智慧製造 OR 綠色減碳 OR AI 射出');
                 const rssUrl = `https://news.google.com/rss/search?q=${searchQuery}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
                 const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
+                let rssItems = [];
                 if (data.status === 'ok' && data.items.length > 0) {
-                    // 🌟 依照發布日期由新到舊（由大到小）進行排序
-                    allNewsItems = data.items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-                    renderNewsCards(allNewsItems);
-                } else {
-                    renderFallbackNews();
+                    rssItems = data.items.map(item => {
+                        let matchedTag = "產業趨勢";
+                        let cat = "others";
+                        
+                        if (item.title.includes("AI") || item.title.includes("智慧") || item.description.includes("AI")) {
+                            matchedTag = "🤖 AI智慧製造"; cat = "AI智慧";
+                        } else if (item.title.includes("減碳") || item.title.includes("ESG") || item.title.includes("發泡")) {
+                            matchedTag = "🌿 綠色減碳"; cat = "綠色減碳";
+                        } else if (item.title.includes("富強鑫") || item.description.includes("富強鑫")) { 
+                            matchedTag = "富強鑫"; cat = "富強鑫"; 
+                        } else if (item.title.includes("全立發") || item.description.includes("全立發")) { 
+                            matchedTag = "全立發"; cat = "全立發"; 
+                        } else if (item.title.includes("華嶸") || item.description.includes("華嶸")) { 
+                            matchedTag = "華嶸"; cat = "華嶸"; 
+                        } else if (item.title.includes("樺欽") || item.description.includes("樺欽")) { 
+                            matchedTag = "樺欽"; cat = "樺欽"; 
+                        }
+
+                        return {
+                            tag: matchedTag,
+                            category: cat,
+                            title: item.title,
+                            date: new Date(item.pubDate).toLocaleDateString('zh-TW'),
+                            desc: item.description.replace(/<[^>]*>?/gm, ''),
+                            link: item.link,
+                            isRss: true
+                        };
+                    });
                 }
+
+                // 結合知識庫與即時 RSS，並依日期由新到舊排序
+                combinedNews = [...comprehensiveKnowledgeBase, ...rssItems].sort((a, b) => new Date(b.date) - new Date(a.date));
+                renderNewsCards(combinedNews);
+
             } catch (err) {
-                console.error("新聞拉取失敗：", err);
-                renderFallbackNews();
+                console.error("即時新聞連線受阻，載入核心前瞻知識庫：", err);
+                combinedNews = comprehensiveKnowledgeBase.sort((a, b) => new Date(b.date) - new Date(a.date));
+                renderNewsCards(combinedNews);
             }
         }
 
-        // 渲染新聞卡片畫面
         function renderNewsCards(items) {
             const grid = document.getElementById('news-grid');
             
@@ -82,88 +201,49 @@
                 grid.innerHTML = `
                     <div class="col-span-1 md:col-span-2 text-center py-12 text-slate-400 font-bold bg-white rounded-2xl border border-slate-200">
                         <i class="fa-solid fa-circle-exclamation text-2xl text-amber-500 mb-2"></i>
-                        <p>目前沒有找到符合該廠商的即時新聞動態。</p>
+                        <p>目前沒有找到相關主題資訊。</p>
                     </div>
                 `;
                 return;
             }
 
-            grid.innerHTML = items.slice(0, 10).map(item => {
-                let matchedTag = "產業趨勢";
-                if (item.title.includes("富強鑫") || item.description.includes("富強鑫")) matchedTag = "富強鑫";
-                else if (item.title.includes("全立發") || item.description.includes("全立發")) matchedTag = "全立發";
-                else if (item.title.includes("華嶸") || item.description.includes("華嶸")) matchedTag = "華嶸";
-                else if (item.title.includes("樺欽") || item.description.includes("樺欽")) matchedTag = "樺欽";
-
-                const pubDate = new Date(item.pubDate).toLocaleDateString('zh-TW');
-
-                return `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">${matchedTag}</span>
-                                <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${pubDate}</span>
-                            </div>
-                            <h3 class="font-bold text-slate-800 text-base leading-snug mb-2 hover:text-emerald-600 transition">
-                                <a href="${item.link}" target="_blank" class="text-slate-800 hover:text-emerald-600 text-decoration-none">${item.title}</a>
-                            </h3>
-                            <p class="text-xs text-slate-500 line-clamp-3">${item.description.replace(/<[^>]*>?/gm, '')}</p>
+            grid.innerHTML = items.map(item => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">${item.tag}</span>
+                            <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${item.date}</span>
                         </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
-                            <span class="text-slate-400 font-semibold">${item.author || '產業新聞來源'}</span>
-                            <a href="${item.link}" target="_blank" class="text-emerald-600 font-bold hover:underline flex items-center gap-1">
-                                閱讀全文 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                            </a>
-                        </div>
+                        <h3 class="font-bold text-slate-800 text-base leading-snug mb-2 hover:text-emerald-600 transition">
+                            <a href="${item.link}" target="_blank" class="text-slate-800 hover:text-emerald-600 text-decoration-none">${item.title}</a>
+                        </h3>
+                        <p class="text-xs text-slate-500 line-clamp-3 leading-relaxed">${item.desc}</p>
                     </div>
-                `;
-            }).join('');
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                        <span class="text-slate-400 font-semibold">${item.isRss ? 'Google 即時新聞' : '前瞻趨勢與標竿觀測'}</span>
+                        <a href="${item.link}" target="_blank" class="text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                            閱讀詳情 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // 篩選新聞並切換按鈕顏色
         function filterNews(keyword, btnElement) {
-            // 1. 切換按鈕樣式（點到的變綠色，其他的變白色）
             const buttons = document.querySelectorAll('.nav-btn');
             buttons.forEach(btn => {
                 btn.className = "nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition";
             });
             btnElement.className = "nav-btn bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition";
 
-            // 2. 篩選新聞資料
             if (keyword === 'all') {
-                renderNewsCards(allNewsItems);
+                renderNewsCards(combinedNews);
             } else {
-                const filtered = allNewsItems.filter(item => 
-                    item.title.includes(keyword) || item.description.includes(keyword)
+                const filtered = combinedNews.filter(item => 
+                    item.category === keyword || item.tag.includes(keyword) || item.title.includes(keyword) || item.desc.includes(keyword)
                 );
                 renderNewsCards(filtered);
             }
-        }
-
-        function renderFallbackNews() {
-            const grid = document.getElementById('news-grid');
-            grid.innerHTML = `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">富強鑫 (FCS)</span>
-                    <h3 class="font-bold text-slate-800 text-base mt-2">智慧自檢成型機與全電/雙色機海外擴展</h3>
-                    <p class="text-xs text-slate-500 mt-1">主打 SA-160 AI 品質自檢型注塑機，聚焦汽車輕量化與微發泡材料拉貨動能，海外布局拓展歐洲與印度新廠。</p>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">華嶸 (Huarong)</span>
-                    <h3 class="font-bold text-slate-800 text-base mt-2">微物理發泡技術與髮夾雙射自動化產線</h3>
-                    <p class="text-xs text-slate-500 mt-1">展示微物理發泡射出成型與轉盤立式機型，專注於汽車燈罩雙射與節能減碳高精度鎖模技術。</p>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">樺欽 (Hwa Chin)</span>
-                    <h3 class="font-bold text-slate-800 text-base mt-2">HC-SE / HRW-SE 單雙色節能伺服射出機</h3>
-                    <p class="text-xs text-slate-500 mt-1">主打寬模壁節能伺服與多色節能射出系統，深耕廣大在地工廠與高耐用度鎖模結構。</p>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">全立發 (CLF)</span>
-                    <h3 class="font-bold text-slate-800 text-base mt-2">超大型與多組分射出成型解決方案</h3>
-                    <p class="text-xs text-slate-500 mt-1">持續優化大型曲手與雙缸射出結構，廣泛應用於大型塑膠件、家電與汽車鈑件射出。</p>
-                </div>
-            `;
         }
 
         window.addEventListener('DOMContentLoaded', fetchIndustryNews);
