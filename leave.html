@@ -78,23 +78,23 @@
                     </div>
                 </div>
 
-                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 (改用 24 小時制) -->
+                <!-- 第二列：開始日期、開始時間、結束日期、結束時間 -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">開始日期</label>
                         <input type="date" id="startDate" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">開始時間 (24小時制)</label>
-                        <input type="time" id="startTime" value="08:30" step="60" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">開始時間</label>
+                        <input type="time" id="startTime" value="08:30" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">結束日期</label>
                         <input type="date" id="endDate" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">結束時間 (24小時制)</label>
-                        <input type="time" id="endTime" value="17:30" step="60" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">結束時間</label>
+                        <input type="time" id="endTime" value="17:30" onchange="updateDateTime()" required class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-600">
                     </div>
                 </div>
 
@@ -172,14 +172,12 @@
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCpazOw8nEAirKT8j4ruNDwwB89KcA_LlmXPAHA7skjIKY2idXA23HyYctylp7aSPXgw/exec";
         const LEAVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv";
 
-        // 主管電話清單（可在此設定對應電話以利 WhatsApp 發送，格式例: 886912345678）
         const MANAGER_PHONES = {
-            "ERIC": "",        // 一階主管 ERIC
-            "李彥綸": "",      // 二階主管 台北 李彥綸
-            "楊添仰": ""       // 二階主管 台南 楊添仰
+            "ERIC": "",
+            "李彥綸": "",
+            "楊添仰": ""
         };
 
-        // 頁面載入時自動帶入登入身分與預設日期
         window.addEventListener('DOMContentLoaded', () => {
             const loggedInName = localStorage.getItem('king_newton_emp_name');
             const isAuth = localStorage.getItem('king_newton_auth');
@@ -193,20 +191,17 @@
             document.getElementById('empNameDisplay').value = loggedInName;
             document.getElementById('empName').value = loggedInName;
 
-            // 預設填入今天的日期
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('startDate').value = todayStr;
             document.getElementById('endDate').value = todayStr;
+            document.getElementById('startTime').value = "08:30";
+            document.getElementById('endTime').value = "17:30";
             updateDateTime();
 
-            // 初始化主管選單帶入
             updateManagerNameOptions();
-
-            // 讀取 CSV 進行個人請假統計
             fetchPersonalLeaveStats(loggedInName);
         });
 
-        // 依據簽核層級自動切換主管名稱選單
         function updateManagerNameOptions() {
             const step = document.getElementById('managerStep').value;
             const selectEl = document.getElementById('managerNameSelect');
@@ -225,7 +220,6 @@
             document.getElementById('managerName').value = document.getElementById('managerNameSelect').value;
         }
 
-        // 組合日期與時間並觸發天數計算
         function updateDateTime() {
             const startDate = document.getElementById('startDate').value;
             const startTime = document.getElementById('startTime').value;
@@ -243,7 +237,6 @@
             calculateLeaveDuration(startDate, startTime, endDate, endTime);
         }
 
-        // 精確計算請假時間（自動扣除 12:00~13:30 中午休息時間）
         function calculateLeaveDuration(sDateStr, sTimeStr, eDateStr, eTimeStr) {
             const daysInput = document.getElementById('leaveDays');
             const start = new Date(`${sDateStr}T${sTimeStr}`);
@@ -264,7 +257,6 @@
 
                 const hours = current.getHours() + current.getMinutes() / 60;
                 
-                // 跳過午休 12:00 (12.0) 至 13:30 (13.5)
                 if (!(hours >= 12.0 && hours < 13.5)) {
                     totalWorkHours += (next - current) / (1000 * 60 * 60);
                 }
@@ -272,7 +264,6 @@
                 current = next;
             }
 
-            // 每日工時基準 7.5 小時
             let calculatedDays = totalWorkHours / 7.5;
 
             if (calculatedDays >= 1) {
@@ -284,7 +275,6 @@
             daysInput.value = calculatedDays;
         }
 
-        // 讀取 CSV 資料並統計該同仁請假天數 (無紀錄時直接隱藏區塊)
         async function fetchPersonalLeaveStats(name) {
             const summaryDiv = document.getElementById('leaveSummaryCard');
 
@@ -331,20 +321,19 @@
                             ${detailHtml}
                         </div>
                     `;
-                    summaryDiv.classList.remove('hidden'); // 有紀錄時顯示
+                    summaryDiv.classList.remove('hidden');
                 } else {
                     summaryDiv.innerHTML = '';
-                    summaryDiv.classList.add('hidden'); // 無紀錄時完全隱藏
+                    summaryDiv.classList.add('hidden');
                 }
 
             } catch (error) {
                 console.error("讀取請假統計失敗:", error);
                 summaryDiv.innerHTML = '';
-                summaryDiv.classList.add('hidden'); // 讀取失敗時也隱藏，保持畫面乾淨
+                summaryDiv.classList.add('hidden');
             }
         }
 
-        // 頁籤切換
         function switchTab(tab) {
             if (tab === 'apply') {
                 document.getElementById('section-apply').classList.remove('hidden');
@@ -360,7 +349,6 @@
             }
         }
 
-        // 提交請假單 + 提示發送 WhatsApp 給 ERIC
         function submitLeave(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
@@ -390,7 +378,6 @@
             .then(res => {
                 alert(`🎉 ${res.message}\n單號：${res.leaveId}`);
                 
-                // WhatsApp 自動通知問詢 (送給 ERIC)
                 const waText = encodeURIComponent(`【請假審核通知】\n同仁：${empName}\n假別：${leaveType}\n天數：${days} 天\n事由：${reason}\n單號：${res.leaveId}\n請至金牛頓系統進行一階簽核。`);
                 const ericPhone = MANAGER_PHONES["ERIC"] || "";
                 
@@ -423,7 +410,6 @@
             });
         }
 
-        // 主管載入待審清單
         function loadPendingLeaves() {
             const tbody = document.getElementById('pendingTableBody');
             tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">正在查詢待審核假單...</td></tr>`;
@@ -456,7 +442,6 @@
                 });
         }
 
-        // 主管執行簽核 + 選擇/提示發送 WhatsApp 給下一階段主管
         function approveLeave(leaveId, applicantName, leaveType, leaveDays) {
             const managerName = document.getElementById('managerName').value;
             const step = parseInt(document.getElementById('managerStep').value);
@@ -483,7 +468,6 @@
             .then(res => {
                 alert(`✅ 簽核完成！${res.message}`);
 
-                // 如果是一階簽核核准，詢問要傳送 WhatsApp 給哪位二階主管（李彥綸 或 楊添仰）
                 if (step === 1) {
                     const targetManager = prompt("一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)", "1");
                     let nextManagerName = "";
