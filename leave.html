@@ -237,10 +237,18 @@
             calculateLeaveDuration(startDate, startTime, endDate, endTime);
         }
 
+// 精確計算請假時間（改用本地時間拆解，避免 UTC 時差錯誤）
         function calculateLeaveDuration(sDateStr, sTimeStr, eDateStr, eTimeStr) {
             const daysInput = document.getElementById('leaveDays');
-            const start = new Date(`${sDateStr}T${sTimeStr}`);
-            const end = new Date(`${eDateStr}T${eTimeStr}`);
+            
+            // 安全拆解年月日與時分，確保以「本地時間」建立日期物件
+            const [sY, sM, sD] = sDateStr.split('-').map(Number);
+            const [sH, sMin] = sTimeStr.split(':').map(Number);
+            const start = new Date(sY, sM - 1, sD, sH, sMin);
+
+            const [eY, eM, eD] = eDateStr.split('-').map(Number);
+            const [eH, eMin] = eTimeStr.split(':').map(Number);
+            const end = new Date(eY, eM - 1, eD, eH, eMin);
 
             if (end <= start) {
                 alert("結束時間必須晚於開始時間！");
@@ -257,6 +265,7 @@
 
                 const hours = current.getHours() + current.getMinutes() / 60;
                 
+                // 跳過午休 12:00 (12.0) 至 13:30 (13.5)
                 if (!(hours >= 12.0 && hours < 13.5)) {
                     totalWorkHours += (next - current) / (1000 * 60 * 60);
                 }
@@ -264,6 +273,7 @@
                 current = next;
             }
 
+            // 每日工時基準 7.5 小時
             let calculatedDays = totalWorkHours / 7.5;
 
             if (calculatedDays >= 1) {
@@ -274,7 +284,6 @@
 
             daysInput.value = calculatedDays;
         }
-
         async function fetchPersonalLeaveStats(name) {
             const summaryDiv = document.getElementById('leaveSummaryCard');
 
