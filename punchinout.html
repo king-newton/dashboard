@@ -138,9 +138,10 @@
 <!-- 主管/全員即時總表按鈕專區 -->
 <div class="card" style="text-align: center;">
     <h3 style="margin-top: 0; color: #333; font-size: 18px;">📋 出勤紀錄查詢</h3>
-    <p style="font-size: 14px; color: #666;">點擊下方按鈕即可隨時在新視窗查看出勤總表列印檔：</p>
-    <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=pdf" target="_blank" class="sheet-btn">
-        🖨️ 開啟即時出勤列印報表檔
+    <p style="font-size: 14px; color: #666;">點擊下方按鈕即可隨時在新視窗查看出勤總表圖片檔：</p>
+    <!-- 已將格式從 format=pdf 改為 format=jpeg -->
+    <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=jpeg" target="_blank" class="sheet-btn">
+        🖼️ 開啟即時出勤總表圖片檔
     </a>
 </div>
 
@@ -254,7 +255,8 @@
         .then(response => {
             document.getElementById("status").innerText = "🎉 送出成功！資料已存入雲端試算表。";
             
-            window.open('https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=pdf', '_blank');
+            // 送出成功後自動開啟 JPG 圖片格式的出勤總表
+            window.open('https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/export?format=jpeg', '_blank');
 
             document.getElementById("checkinForm").reset();
             
