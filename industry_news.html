@@ -28,18 +28,18 @@
             </a>
         </div>
 
-        <!-- 快速廠商捷徑標籤 -->
-        <div class="flex flex-wrap gap-2">
-            <button onclick="filterNews('all')" class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm hover:bg-emerald-700 transition">全產業觀測</button>
-            <button onclick="filterNews('富強鑫')" class="bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">富強鑫 (FCS)</button>
-            <button onclick="filterNews('全立發')" class="bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">全立發 (CLF)</button>
-            <button onclick="filterNews('華嶸')" class="bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">華嶸 (Huarong)</button>
-            <button onclick="filterNews('樺欽')" class="bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">樺欽 (Hwa Chin)</button>
+        <!-- 快速廠商捷徑標籤（加入 id 方便切換選中狀態） -->
+        <div class="flex flex-wrap gap-2" id="filter-buttons">
+            <button onclick="filterNews('all', this)" class="nav-btn bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition">全產業觀測</button>
+            <button onclick="filterNews('富強鑫', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">富強鑫 (FCS)</button>
+            <button onclick="filterNews('全立發', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">全立發 (CLF)</button>
+            <button onclick="filterNews('華嶸', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">華嶸 (Huarong)</button>
+            <button onclick="filterNews('樺欽', this)" class="nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition">樺欽 (Hwa Chin)</button>
         </div>
 
         <!-- 即時動態網格卡片區 -->
         <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- 數據會由 JavaScript 自動載入或呈現預設產業焦點 -->
+            <!-- 數據會由 JavaScript 自動載入 -->
             <div class="col-span-1 md:col-span-2 text-center py-12 text-slate-400 font-bold">
                 <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
                 <p>正在載入最新產業動態與廠商焦點...</p>
@@ -49,16 +49,11 @@
     </div>
 
     <script>
-        // 預設關注的重點企業與主題關鍵字
-        const TARGET_KEYWORDS = ['富強鑫', '全立發', '華嶸', '樺欽', '射出機', '微發泡成型'];
+        let allNewsItems = []; // 儲存抓取到的全部新聞
 
         // 載入 Google News RSS 透過 RSS2JSON API 轉為資料
         async function fetchIndustryNews() {
-            const grid = document.getElementById('news-grid');
-            grid.innerHTML = '';
-
             try {
-                // 搜尋關鍵字：射出成型機 富強鑫 全立發 華嶸 樺欽
                 const searchQuery = encodeURIComponent('射出成型機 OR 富強鑫 OR 全立發 OR 華嶸 OR 樺欽');
                 const rssUrl = `https://news.google.com/rss/search?q=${searchQuery}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
                 const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
@@ -67,7 +62,9 @@
                 const data = await response.json();
 
                 if (data.status === 'ok' && data.items.length > 0) {
-                    renderNewsCards(data.items);
+                    // 🌟 依照發布日期由新到舊（由大到小）進行排序
+                    allNewsItems = data.items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+                    renderNewsCards(allNewsItems);
                 } else {
                     renderFallbackNews();
                 }
@@ -77,15 +74,26 @@
             }
         }
 
+        // 渲染新聞卡片畫面
         function renderNewsCards(items) {
             const grid = document.getElementById('news-grid');
+            
+            if (items.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-1 md:col-span-2 text-center py-12 text-slate-400 font-bold bg-white rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-circle-exclamation text-2xl text-amber-500 mb-2"></i>
+                        <p>目前沒有找到符合該廠商的即時新聞動態。</p>
+                    </div>
+                `;
+                return;
+            }
+
             grid.innerHTML = items.slice(0, 10).map(item => {
-                // 自動標記關聯廠商 Tag
                 let matchedTag = "產業趨勢";
-                if (item.title.includes("富強鑫")) matchedTag = "富強鑫";
-                else if (item.title.includes("全立發")) matchedTag = "全立發";
-                else if (item.title.includes("華嶸")) matchedTag = "華嶸";
-                else if (item.title.includes("樺欽")) matchedTag = "樺欽";
+                if (item.title.includes("富強鑫") || item.description.includes("富強鑫")) matchedTag = "富強鑫";
+                else if (item.title.includes("全立發") || item.description.includes("全立發")) matchedTag = "全立發";
+                else if (item.title.includes("華嶸") || item.description.includes("華嶸")) matchedTag = "華嶸";
+                else if (item.title.includes("樺欽") || item.description.includes("樺欽")) matchedTag = "樺欽";
 
                 const pubDate = new Date(item.pubDate).toLocaleDateString('zh-TW');
 
@@ -112,8 +120,27 @@
             }).join('');
         }
 
+        // 篩選新聞並切換按鈕顏色
+        function filterNews(keyword, btnElement) {
+            // 1. 切換按鈕樣式（點到的變綠色，其他的變白色）
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                btn.className = "nav-btn bg-white text-slate-700 font-bold px-4 py-2 rounded-xl text-xs border border-slate-200 hover:bg-emerald-50 transition";
+            });
+            btnElement.className = "nav-btn bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm transition";
+
+            // 2. 篩選新聞資料
+            if (keyword === 'all') {
+                renderNewsCards(allNewsItems);
+            } else {
+                const filtered = allNewsItems.filter(item => 
+                    item.title.includes(keyword) || item.description.includes(keyword)
+                );
+                renderNewsCards(filtered);
+            }
+        }
+
         function renderFallbackNews() {
-            // 如果聯外網抓取有擋，顯示預載重點廠商趨勢速覽
             const grid = document.getElementById('news-grid');
             grid.innerHTML = `
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
@@ -137,12 +164,6 @@
                     <p class="text-xs text-slate-500 mt-1">持續優化大型曲手與雙缸射出結構，廣泛應用於大型塑膠件、家電與汽車鈑件射出。</p>
                 </div>
             `;
-        }
-
-        function filterNews(keyword) {
-            // 可在此新增特定關鍵字過濾邏輯
-            if (keyword === 'all') fetchIndustryNews();
-            else alert(`正在篩選包含【${keyword}】的最新產業新聞...`);
         }
 
         window.addEventListener('DOMContentLoaded', fetchIndustryNews);
