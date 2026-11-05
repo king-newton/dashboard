@@ -21,6 +21,30 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
             margin-bottom: 20px;
         }
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .nav-link {
+            text-decoration: none;
+            background: #6c757d;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .nav-link:hover {
+            background: #5a6268;
+        }
+        .logout-link {
+            background: #dc3545;
+        }
+        .logout-link:hover {
+            background: #c82333;
+        }
         h2 {
             margin-top: 0;
             color: #333;
@@ -100,6 +124,12 @@
 </head>
 <body>
 
+<!-- 頂部導覽列：返回入口網與登出按鈕 -->
+<div class="top-nav">
+    <a href="index.html" class="nav-link">🏠 返回入口網</a>
+    <a href="#" class="nav-link logout-link" onclick="logoutSystem()">🚪 登出系統</a>
+</div>
+
 <div class="card">
     <h2>🚀 公司出勤與狀態回報</h2>
     <form id="checkinForm">
@@ -139,7 +169,6 @@
 <div class="card" style="text-align: center;">
     <h3 style="margin-top: 0; color: #333; font-size: 18px;">📋 出勤紀錄查詢</h3>
     <p style="font-size: 14px; color: #666;">點擊下方按鈕即可隨時在新視窗查看出勤總表線上檢視：</p>
-    <!-- 已改為線上檢視模式 -->
     <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/edit?usp=sharing" target="_blank" class="sheet-btn">
         📋 開啟即時出勤總表線上檢視
     </a>
@@ -161,6 +190,15 @@
         document.getElementById('empNameDisplay').value = loggedInName;
         document.getElementById('empName').value = loggedInName;
     });
+
+    // 登出系統函式
+    function logoutSystem() {
+        if (confirm("確定要登出系統嗎？")) {
+            localStorage.removeItem('king_newton_auth');
+            localStorage.removeItem('king_newton_emp_name');
+            window.location.href = "index.html";
+        }
+    }
 
     let currentCoords = "";
     let currentAddress = "";
