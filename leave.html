@@ -204,7 +204,7 @@
             return next.toISOString().split('T')[0];
         }
 
-        // 頁面載入時自動帶入身分與下一個工作日
+        // 頁面載入時自動帶入身分、檢查權限與過濾簽核頁籤
         window.addEventListener('DOMContentLoaded', () => {
             const loggedInName = localStorage.getItem('king_newton_emp_name');
             const isAuth = localStorage.getItem('king_newton_auth');
@@ -228,6 +228,15 @@
 
             updateManagerNameOptions();
             fetchPersonalLeaveStats(loggedInName);
+
+            // 若非主管或管理者 (ERIC)，直接隱藏「主管簽核儀表板」頁籤，防止一般員工切換
+            const isManager = ['ERIC', '李彥綸', '楊添仰'].includes(loggedInName);
+            if (!isManager) {
+                const approveTabBtn = document.getElementById('tab-approve');
+                if (approveTabBtn) {
+                    approveTabBtn.style.display = 'none';
+                }
+            }
         });
 
         // 登出系統函式
@@ -239,16 +248,35 @@
             }
         }
 
+        // 動態依據登入者身分產生對應的主管選項
         function updateManagerNameOptions() {
+            const loggedInName = localStorage.getItem('king_newton_emp_name');
             const step = document.getElementById('managerStep').value;
             const selectEl = document.getElementById('managerNameSelect');
             selectEl.innerHTML = '';
 
-            if (step === '1') {
-                selectEl.add(new Option("ERIC (一階主管)", "ERIC"));
+            if (loggedInName === 'ERIC') {
+                // 管理者 ERIC 可依選擇的層級帶入對應主管
+                if (step === '1') {
+                    selectEl.add(new Option("ERIC (一階主管)", "ERIC"));
+                } else {
+                    selectEl.add(new Option("李彥綸 (台北主管)", "李彥綸"));
+                    selectEl.add(new Option("楊添仰 (台南主管)", "楊添仰"));
+                }
+            } else if (loggedInName === '李彥綸') {
+                if (step === '2') {
+                    selectEl.add(new Option("李彥綸 (台北主管)", "李彥綸"));
+                } else {
+                    selectEl.add(new Option("無一階簽核權限", ""));
+                }
+            } else if (loggedInName === '楊添仰') {
+                if (step === '2') {
+                    selectEl.add(new Option("楊添仰 (台南主管)", "楊添仰"));
+                } else {
+                    selectEl.add(new Option("無一階簽核權限", ""));
+                }
             } else {
-                selectEl.add(new Option("李彥綸 (台北主管)", "李彥綸"));
-                selectEl.add(new Option("楊添仰 (台南主管)", "楊添仰"));
+                selectEl.add(new Option("您無主管簽核權限", ""));
             }
             syncManagerName();
         }
@@ -384,7 +412,16 @@
             }
         }
 
+        // 頁籤切換安全檢查
         function switchTab(tab) {
+            const loggedInName = localStorage.getItem('king_newton_emp_name');
+            const isManager = ['ERIC', '李彥綸', '楊添仰'].includes(loggedInName);
+
+            if (tab === 'approve' && !isManager) {
+                alert("權限不足：您沒有存取「主管簽核儀表板」的權限！");
+                return;
+            }
+
             if (tab === 'apply') {
                 document.getElementById('section-apply').classList.remove('hidden');
                 document.getElementById('section-approve').classList.add('hidden');
@@ -475,12 +512,26 @@
                 });
         }
 
+        // 簽核動作加入身分核對與自我簽核防呆
         function approveLeave(leaveId, applicantName, leaveType, leaveDays) {
+            const loggedInName = localStorage.getItem('king_newton_emp_name');
             const managerName = document.getElementById('managerName').value;
             const step = parseInt(document.getElementById('managerStep').value);
 
+            // 1. 身分冒用防護：非 ERIC 者不可代簽其他主管身分
+            if (loggedInName !== 'ERIC' && loggedInName !== managerName) {
+                alert(`權限錯誤：您的登入身分是【${loggedInName}】，不可使用【${managerName}】進行簽核！`);
+                return;
+            }
+
+            // 2. 自我簽核防呆：申請人不能簽核自己的假單（管理者 ERIC 例外）
+            if (applicantName === loggedInName && loggedInName !== 'ERIC') {
+                alert("防呆機制觸發：申請人不能自行簽核自己的請假單！");
+                return;
+            }
+
             if (!managerName) {
-                alert("請先確認簽核主管姓名！");
+                alert("請先選擇有效的簽核主管！");
                 return;
             }
 
