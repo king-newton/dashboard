@@ -201,7 +201,6 @@
 
     <script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
-        const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";
 
         const LEVEL1_MANAGER_IDS = ["E001"];
         const LEVEL2_MANAGER_IDS = ["E002"];
@@ -453,72 +452,41 @@
             });
         }
 
-        function parseCSVRow(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
-                if (ch === '"') {
-                    if (inQuotes && line[i + 1] === '"') {
-                        current += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (ch === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += ch;
-                }
-            }
-            result.push(current.trim());
-            return result;
-        }
-
         function loadTripRecords() {
             const listDiv = document.getElementById('recordList');
             listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">資料讀取中...</div>';
 
-            const sep = CSV_DATA_URL.includes('?') ? '&' : '?';
-            fetch(`${CSV_DATA_URL}${sep}t=${new Date().getTime()}`)
+            const sep = GAS_WEB_APP_URL.includes('?') ? '&' : '?';
+            fetch(`${GAS_WEB_APP_URL}${sep}action=getBusinessTrips&t=${new Date().getTime()}`)
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
-                    return res.text();
+                    return res.json();
                 })
-                .then(csvText => {
-                    const cleanText = csvText.replace(/\r/g, '').trim();
-                    if (!cleanText || cleanText.startsWith('<!DOCTYPE') || cleanText.startsWith('<html')) {
-                        listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
-                        return;
-                    }
-
-                    const lines = cleanText.split('\n').filter(l => l.trim() !== '');
-                    if (lines.length <= 1) {
+                .then(result => {
+                    if (!result || result.status !== 'success' || !Array.isArray(result.data) || result.data.length === 0) {
                         listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
                         return;
                     }
 
                     const isLevel1 = LEVEL1_MANAGER_IDS.includes(currentUser.id);
                     const isLevel2 = LEVEL2_MANAGER_IDS.includes(currentUser.id);
-                    const dataRows = lines.slice(1).map(parseCSVRow).filter(r => r.some(c => c !== '')).reverse();
+                    const dataRows = result.data.slice().reverse();
 
-                    listDiv.innerHTML = dataRows.map(col => {
-                        const empId = col[1] || '';
-                        const empName = col[2] || '';
-                        const factory = col[3] || '';
-                        const startDate = col[4] || '';
-                        const endDate = col[5] || '';
-                        const days = col[6] || '';
-                        const route = col[7] || '';
-                        const reason = col[8] || '';
-                        const transport = col[9] || '';
-                        const expense = col[10] || '無';
-                        const proxy1 = col[11] || '';
-                        const proxy2 = col[12] || '無';
-                        const status = col[13] || '待一階簽核';
-                        const note = col[14] || '';
+                    listDiv.innerHTML = dataRows.map(item => {
+                        const empId = item.empId || '';
+                        const empName = item.empName || '';
+                        const factory = item.factory || '';
+                        const startDate = item.startDate || '';
+                        const endDate = item.endDate || '';
+                        const days = item.days || '';
+                        const route = item.route || '';
+                        const reason = item.reason || '';
+                        const transport = item.transport || '';
+                        const expense = item.expense || '無';
+                        const proxy1 = item.proxy1 || '';
+                        const proxy2 = item.proxy2 || '無';
+                        const status = item.status || '待一階簽核';
+                        const note = item.note || '';
 
                         let badgeClass = 'bg-amber-100 text-amber-700';
                         if (status.includes('核准')) badgeClass = 'bg-emerald-100 text-emerald-700';
@@ -559,8 +527,8 @@
                         `;
                     }).join('');
                 })
-                .catch(() => {
-                    listDiv.innerHTML = '<div class="text-center text-rose-500 py-4">讀取 CSV 資料失敗，請確認 Google Sheet 發布與權限。</div>';
+                .catch(err => {
+                    listDiv.innerHTML = `<div class="text-center text-rose-500 py-4">讀取紀錄失敗：${err.message}</div>`;
                 });
         }
     </script>
