@@ -196,6 +196,13 @@
             return false;
         }
 
+        function getSecondStageReviewerHint(factory) {
+            const fac = String(factory || "").trim();
+            if (fac === "台南" || fac === "南") return "楊添仰 (E002)";
+            if (fac === "台北" || fac === "北") return "李彥綸 (E001)";
+            return "李彥綸 (E001) / 楊添仰 (E002)（ERIC E020 可代簽）";
+        }
+
         const EMPLOYEE_LIST = [
             { id: "E001", name: "李彥綸" },
             { id: "E002", name: "楊添仰" },
@@ -215,6 +222,7 @@
 
         let currentUser = { id: "", name: "" };
         let calculatedDays = 0;
+        let cachedTrips = [];
 
         function clearAuthStorage() {
             localStorage.removeItem('king_newton_auth');
@@ -353,6 +361,11 @@
             }
         }
 
+        function openWhatsAppText(message) {
+            const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(waUrl, "_blank", "noopener,noreferrer");
+        }
+
         function buildWhatsAppSummary(payload) {
             const proxies = [payload.proxy1, payload.proxy2].filter(p => p && p !== "無");
             const proxyText = proxies.length > 0 ? proxies.join(" / ") : "無";
@@ -371,12 +384,32 @@
             ].join("\n");
         }
 
+        function buildStage2WhatsAppSummary(tripItem, noteText) {
+            const reviewerHint = getSecondStageReviewerHint(tripItem.factory);
+            return [
+                "【金牛頓工業｜出差單一階簽核完成，請二階簽核】",
+                `二階簽核對象：${reviewerHint}`,
+                `申請人：${tripItem.empName || ''} (${tripItem.empId || ''})`,
+                `廠區：${tripItem.factory || ''}廠`,
+                `期間：${tripItem.startDate || ''} ~ ${tripItem.endDate || ''} (共 ${tripItem.days || ''} 天)`,
+                `行程：${tripItem.route || ''}`,
+                `事由：${tripItem.reason || ''}`,
+                `簽核備註：${noteText || '同意'}`
+            ].join("\n");
+        }
+
         function promptSendWhatsApp(payload) {
             const wantSend = confirm("出差單已送出！請問是否要將出差資訊傳送到 WhatsApp？");
             if (wantSend) {
-                const message = buildWhatsAppSummary(payload);
-                const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                window.open(waUrl, "_blank", "noopener,noreferrer");
+                openWhatsAppText(buildWhatsAppSummary(payload));
+            }
+        }
+
+        function promptSendStage2WhatsApp(tripItem, noteText) {
+            const reviewerHint = getSecondStageReviewerHint(tripItem.factory);
+            const wantSend = confirm(`一階簽核完成（狀態：待二階簽核，對象：${reviewerHint}）。\n請問是否要將通知傳送到 WhatsApp？`);
+            if (wantSend) {
+                openWhatsAppText(buildStage2WhatsAppSummary(tripItem, noteText));
             }
         }
 
@@ -453,6 +486,11 @@
                 nextStatus = "已核准";
             }
 
+            const matchedTrip = cachedTrips.find(t =>
+                (tripId && String(t.id) === String(tripId)) ||
+                (String(t.empId) === String(empId) && String(t.startDate) === String(startDate))
+            ) || { id: tripId, empId, startDate, factory };
+
             const payload = {
                 action: "reviewTrip",
                 tripId: tripId,
@@ -470,7 +508,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                alert(`第${stage}階簽核完成，目前狀態：${nextStatus}`);
+                if (stage === 1 && decision === 'approve') {
+                    promptSendStage2WhatsApp(matchedTrip, note);
+                } else {
+                    alert(`第${stage}階簽核完成，目前狀態：${nextStatus}`);
+                }
                 setTimeout(loadTripRecords, 1500);
             });
         }
@@ -487,10 +529,12 @@
                 })
                 .then(result => {
                     if (!result || result.status !== 'success' || !Array.isArray(result.data) || result.data.length === 0) {
+                        cachedTrips = [];
                         listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
                         return;
                     }
 
+                    cachedTrips = result.data;
                     const dataRows = result.data.slice().reverse();
 
                     listDiv.innerHTML = dataRows.map(item => {
