@@ -174,23 +174,26 @@
     <script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
 
-        // 一階簽核人：ERIC (E020)
-        const LEVEL1_MANAGER_IDS = ["E020"];
-
-        // 二階簽核人：北、中為李彥綸 (E001)；南為楊添仰 (E002)；ERIC (E020) 為管理員可代簽二階
-        function canApproveLevel2(empId, factory) {
+        // 簽核規則：
+        // 1. 一階：ERIC (E020)
+        // 2. 二階：北 -> 李彥綸 (E001)；南 -> 楊添仰 (E002)；ERIC (E020) 可代簽所有二階
+        function checkSignPermission(empId, factory, stage) {
             const id = String(empId || "").trim().toUpperCase();
-            if (id === "E020") return true;
-
             const fac = String(factory || "").trim();
-            if (fac === "台南" || fac === "南") {
-                return id === "E002";
-            }
-            return id === "E001";
-        }
 
-        function canApproveLevel1(empId) {
-            return LEVEL1_MANAGER_IDS.includes(String(empId || "").trim().toUpperCase());
+            if (stage === 1) {
+                return id === "E020";
+            }
+
+            if (stage === 2) {
+                if (id === "E020") return true;
+                if (fac === "台北" || fac === "北") return id === "E001";
+                if (fac === "台南" || fac === "南") return id === "E002";
+                if (fac === "台中" || fac === "中") return id === "E001" || id === "E002";
+                return false;
+            }
+
+            return false;
         }
 
         const EMPLOYEE_LIST = [
@@ -431,7 +434,12 @@
             });
         }
 
-        function handleReview(tripId, empId, startDate, stage, decision) {
+        function handleReview(tripId, empId, startDate, factory, stage, decision) {
+            if (!checkSignPermission(currentUser.id, factory, stage)) {
+                alert(`您的身分（${currentUser.id} ${currentUser.name}）無第${stage}階簽核權限。`);
+                return;
+            }
+
             const actionLabel = decision === 'approve' ? '核准' : '駁回';
             const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
             if (note === null) return;
@@ -483,7 +491,6 @@
                         return;
                     }
 
-                    const isLevel1 = canApproveLevel1(currentUser.id);
                     const dataRows = result.data.slice().reverse();
 
                     listDiv.innerHTML = dataRows.map(item => {
@@ -503,7 +510,6 @@
                         const status = item.status || '待一階簽核';
                         const note = item.note || '';
 
-                        const isLevel2 = canApproveLevel2(currentUser.id, factory);
                         const proxies = [proxy1, proxy2].filter(p => p && p !== '無');
                         const proxyDisplay = proxies.length > 0 ? proxies.join(' / ') : '無';
 
@@ -513,20 +519,22 @@
                         else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
 
                         let actionButtonsHtml = '';
-                        if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
-                            actionButtonsHtml = `
-                                <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
-                                </div>
-                            `;
-                        } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
-                            actionButtonsHtml = `
-                                <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
-                                </div>
-                            `;
+                        if (!status.includes('核准') && !status.includes('駁回')) {
+                            if (status.includes('二階')) {
+                                actionButtonsHtml = `
+                                    <div class="flex gap-2 pt-2 border-t">
+                                        <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', '${factory}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                        <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', '${factory}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                    </div>
+                                `;
+                            } else {
+                                actionButtonsHtml = `
+                                    <div class="flex gap-2 pt-2 border-t">
+                                        <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', '${factory}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                        <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', '${factory}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
+                                    </div>
+                                `;
+                            }
                         }
 
                         return `
