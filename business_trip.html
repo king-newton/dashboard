@@ -26,7 +26,7 @@
 </head>
 <body class="pb-12">
 
-    <!-- 🔒 身份驗證彈窗遮罩 (若尚未登入可直接在此驗證) -->
+    <!-- 身份驗證彈窗遮罩 -->
     <div id="auth-modal">
         <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl border border-slate-100 text-center space-y-4">
             <div class="w-14 h-14 bg-emerald-100 text-[#00a600] rounded-2xl flex items-center justify-center mx-auto text-xl shadow-sm">
@@ -57,7 +57,7 @@
             <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">
             <span class="font-bold text-sm sm:text-base tracking-wide truncate">出差申請與簽核</span>
             <span id="user-display" class="hidden md:inline-block text-xs bg-white/20 px-2.5 py-0.5 rounded-full font-medium shrink-0">
-                驗證中...
+                尚未登入
             </span>
         </div>
 
@@ -78,7 +78,7 @@
         <!-- 手機版身分顯示 -->
         <div class="md:hidden flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
             <span>目前登入身分</span>
-            <span id="user-display-mobile" class="font-bold text-[#00a600]">驗證中...</span>
+            <span id="user-display-mobile" class="font-bold text-[#00a600]">尚未登入</span>
         </div>
         
         <!-- Tab 頁籤 -->
@@ -142,7 +142,6 @@
                     </div>
                 </div>
 
-                <!-- 職務代理人選單（保留完整選項） -->
                 <div class="grid grid-cols-2 gap-3 pt-1">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">第一職務代理人</label>
@@ -207,8 +206,8 @@
     </main>
 
     <script>
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";[cite: 4, 5]
-        const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";[cite: 2, 4, 5]
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
+        const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";
 
         const LEVEL1_MANAGER_IDS = ["E001"]; // 一階主管：李彥綸
         const LEVEL2_MANAGER_IDS = ["E002"]; // 二階主管：楊添仰
@@ -233,6 +232,19 @@
         let currentUser = { id: "", name: "" };
         let calculatedDays = 0;
 
+        function clearAuthStorage() {
+            localStorage.removeItem('king_newton_auth');
+            localStorage.removeItem('king_newton_emp_id');
+            localStorage.removeItem('king_newton_emp_name');
+        }
+
+        function showLoginModal() {
+            currentUser = { id: "", name: "" };
+            document.getElementById('user-display').innerText = "尚未登入";
+            document.getElementById('user-display-mobile').innerText = "尚未登入";
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
+
         function applyUserSession(empId, empName) {
             currentUser = { id: empId, name: empName };
             const label = `${empId} ${empName}`;
@@ -252,7 +264,7 @@
             p2.innerHTML = '<option value="">無</option>';
 
             EMPLOYEE_LIST.forEach(emp => {
-                if (emp.name !== currentUser.name && emp.id !== currentUser.id) {
+                if (emp.name.toUpperCase() !== currentUser.name.toUpperCase() && emp.id.toUpperCase() !== currentUser.id.toUpperCase()) {
                     p1.add(new Option(`${emp.name} (${emp.id})`, emp.name));
                     p2.add(new Option(`${emp.name} (${emp.id})`, emp.name));
                 }
@@ -285,9 +297,7 @@
 
         function logoutSystem() {
             if (confirm("確定要登出系統嗎？")) {
-                localStorage.removeItem('king_newton_auth');
-                localStorage.removeItem('king_newton_emp_id');
-                localStorage.removeItem('king_newton_emp_name');
+                clearAuthStorage();
                 window.location.href = "index.html";
             }
         }
@@ -300,19 +310,28 @@
             logoutTrigger.addEventListener(evt, () => clearTimeout(pressTimer));
         });
 
-        window.onload = function() {
-            const isAuth = localStorage.getItem('king_newton_auth');
-            const empId = localStorage.getItem('king_newton_emp_id');
-            const empName = localStorage.getItem('king_newton_emp_name');
+        function initPage() {
+            try {
+                const isAuth = localStorage.getItem('king_newton_auth');
+                const empId = (localStorage.getItem('king_newton_emp_id') || '').trim();
+                const empName = (localStorage.getItem('king_newton_emp_name') || '').trim();
 
-            if (isAuth === 'true' && empId && empName) {
-                applyUserSession(empId, empName);
-            } else {
-                document.getElementById('user-display').innerText = "尚未登入";
-                document.getElementById('user-display-mobile').innerText = "尚未登入";
-                document.getElementById('auth-modal').style.display = 'flex';
+                if (isAuth === 'true' && empId && empName) {
+                    applyUserSession(empId, empName);
+                } else {
+                    clearAuthStorage();
+                    showLoginModal();
+                }
+            } catch (err) {
+                showLoginModal();
             }
-        };
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPage);
+        } else {
+            initPage();
+        }
 
         function calcDays() {
             const startVal = document.getElementById('startDate').value;
@@ -349,7 +368,7 @@
         function submitTrip(e) {
             e.preventDefault();
             if (!currentUser.id || !currentUser.name) {
-                document.getElementById('auth-modal').style.display = 'flex';
+                showLoginModal();
                 return;
             }
             if (calculatedDays <= 0) {
