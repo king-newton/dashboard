@@ -363,6 +363,34 @@
             }
         }
 
+        function buildWhatsAppSummary(payload) {
+            const proxyText = payload.proxy2 && payload.proxy2 !== "無"
+                ? `${payload.proxy1} / ${payload.proxy2}`
+                : payload.proxy1;
+
+            return [
+                "【金牛頓工業｜出差申請通知】",
+                `申請人：${payload.empName} (${payload.empId})`,
+                `廠區：${payload.factory}廠`,
+                `期間：${payload.startDate} ~ ${payload.endDate} (共 ${payload.days} 天)`,
+                `行程：${payload.route}`,
+                `事由：${payload.reason}`,
+                `交通：${payload.transport}`,
+                `費用/預支：${payload.expense}`,
+                `代理人：${proxyText}`,
+                `狀態：${payload.status}`
+            ].join("\n");
+        }
+
+        function promptSendWhatsApp(payload) {
+            const wantSend = confirm("出差單已送出！請問是否要將出差資訊傳送到 WhatsApp？");
+            if (wantSend) {
+                const message = buildWhatsAppSummary(payload);
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(waUrl, "_blank", "noopener,noreferrer");
+            }
+        }
+
         function submitTrip(e) {
             e.preventDefault();
             if (!currentUser.id || !currentUser.name) {
@@ -401,7 +429,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                alert("出差單已成功送出，進入一階簽核流程！");
+                promptSendWhatsApp(payload);
                 document.getElementById('tripForm').reset();
                 calculatedDays = 0;
                 document.getElementById('dayCountText').innerText = "共計：0 天";
@@ -417,7 +445,7 @@
             });
         }
 
-        function handleReview(empId, startDate, stage, decision) {
+        function handleReview(tripId, empId, startDate, stage, decision) {
             const actionLabel = decision === 'approve' ? '核准' : '駁回';
             const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
             if (note === null) return;
@@ -433,6 +461,7 @@
 
             const payload = {
                 action: "reviewTrip",
+                tripId: tripId,
                 empId: empId,
                 startDate: startDate,
                 stage: stage,
@@ -473,6 +502,7 @@
                     const dataRows = result.data.slice().reverse();
 
                     listDiv.innerHTML = dataRows.map(item => {
+                        const tripId = item.id || '';
                         const empId = item.empId || '';
                         const empName = item.empName || '';
                         const factory = item.factory || '';
@@ -497,15 +527,15 @@
                         if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
-                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
                                 </div>
                             `;
                         } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
-                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
                                 </div>
                             `;
                         }
