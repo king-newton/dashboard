@@ -26,7 +26,6 @@
 </head>
 <body class="pb-12">
 
-    <!-- 身份驗證彈窗遮罩 -->
     <div id="auth-modal">
         <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl border border-slate-100 text-center space-y-4">
             <div class="w-14 h-14 bg-emerald-100 text-[#00a600] rounded-2xl flex items-center justify-center mx-auto text-xl shadow-sm">
@@ -51,7 +50,6 @@
         </div>
     </div>
 
-    <!-- 頂部 Header -->
     <header class="bg-[#00a600] text-white px-3 sm:px-4 py-2.5 shadow-md flex items-center justify-between sticky top-0 z-40 gap-2">
         <div id="logout-trigger" class="flex items-center gap-2 min-w-0 cursor-pointer select-none" title="長按 2 秒可清除登入狀態重新驗證">
             <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">
@@ -75,19 +73,16 @@
 
     <main class="max-w-xl mx-auto p-4 space-y-4">
 
-        <!-- 手機版身分顯示 -->
         <div class="md:hidden flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
             <span>目前登入身分</span>
             <span id="user-display-mobile" class="font-bold text-[#00a600]">尚未登入</span>
         </div>
-        
-        <!-- Tab 頁籤 -->
+
         <div class="flex bg-slate-200 p-1 rounded-xl text-xs font-semibold text-slate-600">
             <button type="button" onclick="switchTab('apply')" id="tab-apply" class="tab-btn active flex-1 py-2 rounded-lg transition cursor-pointer">填寫出差單</button>
             <button type="button" onclick="switchTab('review')" id="tab-review" class="tab-btn flex-1 py-2 rounded-lg transition cursor-pointer">簽核與審核紀錄</button>
         </div>
 
-        <!-- 1. 填寫出差單 -->
         <section id="sec-apply" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
             <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
                 <i class="fa-solid fa-paper-plane text-[#00a600]"></i> 新增出差申請
@@ -113,7 +108,7 @@
                         <input type="date" id="endDate" required onchange="calcDays()" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
                     </div>
                 </div>
-                
+
                 <div class="text-right text-slate-500 font-semibold" id="dayCountText">共計：0 天</div>
 
                 <div>
@@ -191,7 +186,6 @@
             </form>
         </section>
 
-        <!-- 2. 出差單審核與紀錄 -->
         <section id="sec-review" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4 hidden">
             <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center justify-between">
                 <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[#00a600]"></i> 審核與簽核紀錄</span>
@@ -207,10 +201,9 @@
 
     <script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
-        const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";
 
-        const LEVEL1_MANAGER_IDS = ["E001"]; // 一階主管：李彥綸
-        const LEVEL2_MANAGER_IDS = ["E002"]; // 二階主管：楊添仰
+        const LEVEL1_MANAGER_IDS = ["E001"];
+        const LEVEL2_MANAGER_IDS = ["E002"];
 
         const EMPLOYEE_LIST = [
             { id: "E001", name: "李彥綸" },
@@ -311,6 +304,11 @@
         });
 
         function initPage() {
+            if (window.location.hash === '#reset') {
+                clearAuthStorage();
+                showLoginModal();
+                return;
+            }
             try {
                 const isAuth = localStorage.getItem('king_newton_auth');
                 const empId = (localStorage.getItem('king_newton_emp_id') || '').trim();
@@ -411,6 +409,7 @@
                 btn.disabled = false;
                 btn.innerText = "送出出差申請";
                 switchTab('review');
+                setTimeout(loadTripRecords, 1200);
             }).catch(err => {
                 alert("送出失敗：" + err);
                 btn.disabled = false;
@@ -453,78 +452,53 @@
             });
         }
 
-        function parseCSVRow(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
-                if (ch === '"') {
-                    if (inQuotes && line[i + 1] === '"') {
-                        current += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (ch === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += ch;
-                }
-            }
-            result.push(current.trim());
-            return result;
-        }
-
         function loadTripRecords() {
             const listDiv = document.getElementById('recordList');
             listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">資料讀取中...</div>';
 
-            const sep = CSV_DATA_URL.includes('?') ? '&' : '?';
-            fetch(`${CSV_DATA_URL}${sep}t=${new Date().getTime()}`)
-                .then(res => res.text())
-                .then(csvText => {
-                    const lines = csvText.replace(/\r/g, '').trim().split('\n').filter(l => l.trim() !== '');
-                    if (lines.length <= 1) {
+            const sep = GAS_WEB_APP_URL.includes('?') ? '&' : '?';
+            fetch(`${GAS_WEB_APP_URL}${sep}action=getBusinessTrips&t=${new Date().getTime()}`)
+                .then(res => res.json())
+                .then(result => {
+                    if (!result || result.status !== 'success' || !Array.isArray(result.data) || result.data.length === 0) {
                         listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
                         return;
                     }
 
                     const isLevel1 = LEVEL1_MANAGER_IDS.includes(currentUser.id);
                     const isLevel2 = LEVEL2_MANAGER_IDS.includes(currentUser.id);
-                    const dataRows = lines.slice(1).map(parseCSVRow).reverse();
+                    const dataRows = result.data.slice().reverse();
 
-                    listDiv.innerHTML = dataRows.map(col => {
-                        const empId = col[1] || '';
-                        const empName = col[2] || '';
-                        const factory = col[3] || '';
-                        const startDate = col[4] || '';
-                        const endDate = col[5] || '';
-                        const days = col[6] || '';
-                        const route = col[7] || '';
-                        const reason = col[8] || '';
-                        const transport = col[9] || '';
-                        const expense = col[10] || '無';
-                        const proxy1 = col[11] || '';
-                        const proxy2 = col[12] || '無';
-                        const status = col[13] || '待一階簽核';
-                        const note = col[14] || '';
+                    listDiv.innerHTML = dataRows.map(item => {
+                        const empId = item.empId || '';
+                        const empName = item.empName || '';
+                        const factory = item.factory || '';
+                        const startDate = item.startDate || '';
+                        const endDate = item.endDate || '';
+                        const days = item.days || '';
+                        const route = item.route || '';
+                        const reason = item.reason || '';
+                        const transport = item.transport || '';
+                        const expense = item.expense || '無';
+                        const proxy1 = item.proxy1 || '';
+                        const proxy2 = item.proxy2 || '無';
+                        const status = item.status || item.step1Status || '待一階簽核';
+                        const note = [item.step1Note, item.step2Note].filter(Boolean).join(' / ');
 
                         let badgeClass = 'bg-amber-100 text-amber-700';
                         if (status.includes('核准')) badgeClass = 'bg-emerald-100 text-emerald-700';
                         else if (status.includes('駁回')) badgeClass = 'bg-rose-100 text-rose-700';
-                        else if (status.includes('二階')) badgeClass = 'bg-sky-100 text-sky-700';
+                        else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
 
                         let actionButtonsHtml = '';
-                        if (isLevel1 && status === '待一階簽核') {
+                        if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
                                     <button type="button" onclick="handleReview('${empId}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
                                     <button type="button" onclick="handleReview('${empId}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
                                 </div>
                             `;
-                        } else if (isLevel2 && status === '待二階簽核') {
+                        } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
                                     <button type="button" onclick="handleReview('${empId}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
@@ -551,7 +525,7 @@
                     }).join('');
                 })
                 .catch(() => {
-                    listDiv.innerHTML = '<div class="text-center text-rose-500 py-4">讀取 CSV 資料失敗，請確認 Google Sheet 發布與權限。</div>';
+                    listDiv.innerHTML = '<div class="text-center text-rose-500 py-4">讀取紀錄失敗，請確認 GAS 部署權限與網址。</div>';
                 });
         }
     </script>
