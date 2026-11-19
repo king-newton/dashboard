@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>金牛頓工業 | 出差申請與簽核</title>
-    <!-- 網頁瀏覽器分頁小圖示 (Favicon) -->
-    <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
+    <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">[cite: 1, 3]
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -16,10 +15,10 @@
 </head>
 <body class="pb-12">
 
-    <!-- 頂部 Header：左側 LOGO + 身分、右側「返回入口網」與「EXIT 登出」 -->
+    <!-- 頂部 Header -->
     <header class="bg-[#00a600] text-white px-3 sm:px-4 py-2.5 shadow-md flex items-center justify-between sticky top-0 z-40 gap-2">
         <div id="logout-trigger" class="flex items-center gap-2 min-w-0 cursor-pointer select-none" title="長按 2 秒可清除登入狀態重新驗證">
-            <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">
+            <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">[cite: 1, 3]
             <span class="font-bold text-sm sm:text-base tracking-wide truncate">出差申請與簽核</span>
             <span id="user-display" class="hidden md:inline-block text-xs bg-white/20 px-2.5 py-0.5 rounded-full font-medium shrink-0">
                 驗證中...
@@ -27,13 +26,10 @@
         </div>
 
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <!-- 返回入口網連結按鈕 -->
             <a href="index.html" class="bg-white text-[#00a600] hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm no-underline">
                 <i class="fa-solid fa-house"></i>
                 <span>入口網</span>
             </a>
-
-            <!-- EXIT 登出按鈕 -->
             <button type="button" onclick="logoutSystem()" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>EXIT</span>
@@ -43,26 +39,25 @@
 
     <main class="max-w-xl mx-auto p-4 space-y-4">
 
-        <!-- 手機版顯示目前登入身分列 -->
+        <!-- 手機版身分顯示 -->
         <div class="md:hidden flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
             <span>目前登入身分</span>
             <span id="user-display-mobile" class="font-bold text-[#00a600]">驗證中...</span>
         </div>
         
-        <!-- 功能切換 Tab -->
+        <!-- Tab 頁籤 -->
         <div class="flex bg-slate-200 p-1 rounded-xl text-xs font-semibold text-slate-600">
             <button type="button" onclick="switchTab('apply')" id="tab-apply" class="tab-btn active flex-1 py-2 rounded-lg transition cursor-pointer">填寫出差單</button>
-            <button type="button" onclick="switchTab('review')" id="tab-review" class="tab-btn flex-1 py-2 rounded-lg transition cursor-pointer">審核與紀錄</button>
+            <button type="button" onclick="switchTab('review')" id="tab-review" class="tab-btn flex-1 py-2 rounded-lg transition cursor-pointer">簽核與審核紀錄</button>
         </div>
 
-        <!-- 1. 填寫出差單表單 -->
+        <!-- 1. 填寫出差單 -->
         <section id="sec-apply" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
             <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
                 <i class="fa-solid fa-paper-plane text-[#00a600]"></i> 新增出差申請
             </h2>
 
             <form id="tripForm" onsubmit="submitTrip(event)" class="space-y-3 text-xs">
-                <!-- 廠別 -->
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">所屬廠區</label>
                     <div class="flex gap-4">
@@ -72,7 +67,6 @@
                     </div>
                 </div>
 
-                <!-- 出差起訖日期 -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">開始日期</label>
@@ -86,19 +80,16 @@
                 
                 <div class="text-right text-slate-500 font-semibold" id="dayCountText">共計：0 天</div>
 
-                <!-- 起訖地點 -->
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">行程地點 (起 ↔ 訖)</label>
                     <input type="text" id="route" placeholder="例：新店 ↔ 彰化 / 新化產線" required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
                 </div>
 
-                <!-- 出差事由 -->
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">出差事由與主要工作內容</label>
                     <textarea id="reason" rows="2" placeholder="請填寫具體任務事項..." required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]"></textarea>
                 </div>
 
-                <!-- 交通工具與估算 -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">主要交通工具</label>
@@ -115,7 +106,6 @@
                     </div>
                 </div>
 
-                <!-- 職務代理人 -->
                 <div class="grid grid-cols-2 gap-3 pt-1">
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">第一職務代理人</label>
@@ -137,10 +127,10 @@
             </form>
         </section>
 
-        <!-- 2. 出差單審核與紀錄檢視 -->
+        <!-- 2. 出差單審核與紀錄 -->
         <section id="sec-review" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4 hidden">
             <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center justify-between">
-                <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[#00a600]"></i> 申請與簽核紀錄</span>
+                <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[#00a600]"></i> 審核與簽核紀錄</span>
                 <button type="button" onclick="loadTripRecords()" class="text-xs text-[#00a600] hover:underline cursor-pointer"><i class="fa-solid fa-rotate-right"></i> 重新整理</button>
             </h2>
 
@@ -152,63 +142,58 @@
     </main>
 
     <script>
-        // 1. Google Apps Script 寫入網址
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5eWga0igixQ-bkyFwx1f1-t455YhWClHs7NKOL4YUkyD-bZjdQE8YYwT5eafa3ELY-w/exec";
-        
-        // 2. Google Sheets 發布 CSV 讀取網址
+        // Google Apps Script 部署網址
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
+
+        // Google Sheets 發布 CSV 讀取網址
         const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";
 
+        // 一階與二階主管工號設定（可依實際簽核層級調整）
+        const LEVEL1_MANAGER_IDS = ["E001"]; // 一階主管：李彥綸
+        const LEVEL2_MANAGER_IDS = ["E002"]; // 二階主管：楊添仰
+
         const EMPLOYEE_LIST = [
-            { id: "E001", name: "李彥綸" },
-            { id: "E002", name: "楊添仰" },
-            { id: "E003", name: "陳品鈞" },
-            { id: "E005", name: "陳秀燕" },
-            { id: "E006", name: "高欣宜" },
-            { id: "E011", name: "余品橋" },
-            { id: "E012", name: "陳慧真" },
-            { id: "E020", name: "ERIC" },
-            { id: "E023", name: "陳靖昂" },
-            { id: "E026", name: "何成偉" },
-            { id: "E029", name: "李佩娟" },
-            { id: "E033", name: "曾晨杰" },
-            { id: "E035", name: "戴政宏" },
-            { id: "E036", name: "詹淑敏" }
+            { id: "E001", name: "李彥綸" },[cite: 1, 3]
+            { id: "E002", name: "楊添仰" },[cite: 1, 3]
+            { id: "E003", name: "陳品鈞" },[cite: 1, 3]
+            { id: "E005", name: "陳秀燕" },[cite: 1, 3]
+            { id: "E006", name: "高欣宜" },[cite: 1, 3]
+            { id: "E011", name: "余品橋" },[cite: 1, 3]
+            { id: "E012", name: "陳慧真" },[cite: 1, 3]
+            { id: "E020", name: "ERIC" },[cite: 1, 3]
+            { id: "E023", name: "陳靖昂" },[cite: 1, 3]
+            { id: "E026", name: "何成偉" },[cite: 1, 3]
+            { id: "E029", name: "李佩娟" },[cite: 1, 3]
+            { id: "E033", name: "曾晨杰" },[cite: 1, 3]
+            { id: "E035", name: "戴政宏" },[cite: 1, 3]
+            { id: "E036", name: "詹淑敏" }[cite: 1, 3]
         ];
 
         let currentUser = { id: "", name: "" };
+        let calculatedDays = 0;
 
-        // 登出並清除登入身分
         function logoutSystem() {
-            if (confirm("確定要登出系統並清除目前的登入身分嗎？")) {
-                localStorage.removeItem('king_newton_auth');
-                localStorage.removeItem('king_newton_emp_id');
-                localStorage.removeItem('king_newton_emp_name');
+            if (confirm("確定要登出系統嗎？")) {
+                localStorage.removeItem('king_newton_auth');[cite: 1, 3]
+                localStorage.removeItem('king_newton_emp_id');[cite: 1, 3]
+                localStorage.removeItem('king_newton_emp_name');[cite: 1, 3]
                 window.location.href = "index.html";
             }
         }
 
-        // 長按左側標題 2 秒清除登入紀錄並返回入口網
+        // 長按左側標題 2 秒清除登入紀錄並登出
         let pressTimer = null;
         const logoutTrigger = document.getElementById('logout-trigger');
-        const startPress = () => {
-            pressTimer = setTimeout(() => {
-                logoutSystem();
-            }, 2000);
-        };
-        const cancelPress = () => {
-            clearTimeout(pressTimer);
-        };
-        logoutTrigger.addEventListener('mousedown', startPress);
-        logoutTrigger.addEventListener('touchstart', startPress);
-        logoutTrigger.addEventListener('mouseup', cancelPress);
-        logoutTrigger.addEventListener('mouseleave', cancelPress);
-        logoutTrigger.addEventListener('touchend', cancelPress);
+        logoutTrigger.addEventListener('mousedown', () => { pressTimer = setTimeout(logoutSystem, 2000); });
+        logoutTrigger.addEventListener('touchstart', () => { pressTimer = setTimeout(logoutSystem, 2000); });
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            logoutTrigger.addEventListener(evt, () => clearTimeout(pressTimer));
+        });
 
-        // 頁面載入初始化
         window.onload = function() {
-            const isAuth = localStorage.getItem('king_newton_auth');
-            const empId = localStorage.getItem('king_newton_emp_id');
-            const empName = localStorage.getItem('king_newton_emp_name');
+            const isAuth = localStorage.getItem('king_newton_auth');[cite: 1, 3]
+            const empId = localStorage.getItem('king_newton_emp_id');[cite: 1, 3]
+            const empName = localStorage.getItem('king_newton_emp_name');[cite: 1, 3]
 
             if (isAuth !== 'true' || !empId || !empName) {
                 alert("未偵測到登入身分，請先由入口網進行登入！");
@@ -221,7 +206,6 @@
             document.getElementById('user-display').innerText = label;
             document.getElementById('user-display-mobile').innerText = label;
 
-            // 初始化代理人下拉選單
             const p1 = document.getElementById('proxy1');
             const p2 = document.getElementById('proxy2');
             EMPLOYEE_LIST.forEach(emp => {
@@ -232,19 +216,27 @@
             });
         };
 
-        // 計算天數
         function calcDays() {
-            const start = new Date(document.getElementById('startDate').value);
-            const end = new Date(document.getElementById('endDate').value);
-            if (start && end && end >= start) {
+            const startVal = document.getElementById('startDate').value;
+            const endVal = document.getElementById('endDate').value;
+            if (!startVal || !endVal) {
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "共計：0 天";
+                return;
+            }
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            if (end >= start) {
                 const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                document.getElementById('dayCountText').innerText = `共計：${diffDays} 天`;
-                document.getElementById('proxy2').required = (diffDays >= 3);
+                calculatedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('dayCountText').innerText = `共計：${calculatedDays} 天`;
+                document.getElementById('proxy2').required = (calculatedDays > 3);
+            } else {
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "結束日期不可早於開始日期";
             }
         }
 
-        // 切換 Tab
         function switchTab(tab) {
             document.getElementById('tab-apply').classList.toggle('active', tab === 'apply');
             document.getElementById('tab-review').classList.toggle('active', tab === 'review');
@@ -259,6 +251,11 @@
         // 送出申請單
         function submitTrip(e) {
             e.preventDefault();
+            if (calculatedDays <= 0) {
+                alert("請確認開始與結束日期是否正確！");
+                return;
+            }
+
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.innerText = "提交中...";
@@ -270,13 +267,14 @@
                 factory: document.querySelector('input[name="factory"]:checked').value,
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
-                route: document.getElementById('route').value,
-                reason: document.getElementById('reason').value,
+                days: calculatedDays,
+                route: document.getElementById('route').value.trim(),
+                reason: document.getElementById('reason').value.trim(),
                 transport: document.getElementById('transport').value,
-                expense: document.getElementById('expense').value || "無",
+                expense: document.getElementById('expense').value.trim() || "無",
                 proxy1: document.getElementById('proxy1').value,
                 proxy2: document.getElementById('proxy2').value || "無",
-                status: "待審核"
+                status: "待一階簽核"
             };
 
             fetch(GAS_WEB_APP_URL, {
@@ -285,56 +283,157 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                alert("出差單已成功送出！");
+                alert("出差單已成功送出，進入一階簽核流程！");
                 document.getElementById('tripForm').reset();
+                calculatedDays = 0;
                 document.getElementById('dayCountText').innerText = "共計：0 天";
                 btn.disabled = false;
                 btn.innerText = "送出出差申請";
                 switchTab('review');
             }).catch(err => {
-                alert("送出失敗，請重試：" + err);
+                alert("送出失敗：" + err);
                 btn.disabled = false;
                 btn.innerText = "送出出差申請";
             });
         }
 
-        // 讀取並解析 CSV 簽核紀錄
+        // 一階／二階主管簽核處理
+        function handleReview(empId, startDate, stage, decision) {
+            const actionLabel = decision === 'approve' ? '核准' : '駁回';
+            const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
+            if (note === null) return;
+
+            let nextStatus = "待一階簽核";
+            if (decision === 'reject') {
+                nextStatus = "已駁回";
+            } else if (stage === 1) {
+                nextStatus = "待二階簽核";
+            } else if (stage === 2) {
+                nextStatus = "已核准";
+            }
+
+            const payload = {
+                action: "reviewTrip",
+                empId: empId,
+                startDate: startDate,
+                stage: stage,
+                decision: decision,
+                newStatus: nextStatus,
+                reviewerNote: `[${stage}階 ${currentUser.name} - ${actionLabel}] ${note}`
+            };
+
+            fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert(`第${stage}階簽核完成，目前狀態：${nextStatus}`);
+                setTimeout(loadTripRecords, 1500);
+            });
+        }
+
+        // 支援雙引號包裹欄位的簡易 CSV 拆解器
+        function parseCSVRow(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        // 讀取 CSV 簽核紀錄並渲染一階／二階簽核按鈕
         function loadTripRecords() {
             const listDiv = document.getElementById('recordList');
             listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">資料讀取中...</div>';
 
-            fetch(CSV_DATA_URL)
+            const sep = CSV_DATA_URL.includes('?') ? '&' : '?';
+            fetch(`${CSV_DATA_URL}${sep}t=${new Date().getTime()}`)
                 .then(res => res.text())
                 .then(csvText => {
-                    const rows = csvText.trim().split('\n').map(row => row.split(','));
-                    if (rows.length <= 1) {
+                    const lines = csvText.replace(/\r/g, '').trim().split('\n').filter(l => l.trim() !== '');
+                    if (lines.length <= 1) {
                         listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
                         return;
                     }
 
-                    // 標頭以外的列，倒序呈現最新申請紀錄
-                    const dataRows = rows.slice(1).reverse();
+                    const isLevel1 = LEVEL1_MANAGER_IDS.includes(currentUser.id);
+                    const isLevel2 = LEVEL2_MANAGER_IDS.includes(currentUser.id);
+                    const dataRows = lines.slice(1).map(parseCSVRow).reverse();
+
                     listDiv.innerHTML = dataRows.map(col => {
-                        const status = col[13] ? col[13].replace(/\r/g, '').trim() : '待審核';
-                        return `
-                            <div class="border border-slate-200 rounded-xl p-3 bg-slate-50 space-y-1.5 shadow-sm">
-                                <div class="flex justify-between items-center border-b pb-1">
-                                    <span class="font-bold text-slate-800">${col[2]} (${col[3]}廠)</span>
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                        status === '核准' ? 'bg-emerald-100 text-emerald-700' :
-                                        status === '駁回' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
-                                    }">${status}</span>
+                        const empId = col[1] || '';
+                        const empName = col[2] || '';
+                        const factory = col[3] || '';
+                        const startDate = col[4] || '';
+                        const endDate = col[5] || '';
+                        const days = col[6] || '';
+                        const route = col[7] || '';
+                        const reason = col[8] || '';
+                        const transport = col[9] || '';
+                        const expense = col[10] || '無';
+                        const proxy1 = col[11] || '';
+                        const proxy2 = col[12] || '無';
+                        const status = col[13] || '待一階簽核';
+                        const note = col[14] || '';
+
+                        let badgeClass = 'bg-amber-100 text-amber-700';
+                        if (status.includes('核准')) badgeClass = 'bg-emerald-100 text-emerald-700';
+                        else if (status.includes('駁回')) badgeClass = 'bg-rose-100 text-rose-700';
+                        else if (status.includes('二階')) badgeClass = 'bg-sky-100 text-sky-700';
+
+                        let actionButtonsHtml = '';
+                        if (isLevel1 && status === '待一階簽核') {
+                            actionButtonsHtml = `
+                                <div class="flex gap-2 pt-2 border-t">
+                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
                                 </div>
-                                <div class="text-slate-600"><strong>期間：</strong>${col[4]} ~ ${col[5]} (${col[6]}天)</div>
-                                <div class="text-slate-600"><strong>行程：</strong>${col[7]} (${col[9]})</div>
-                                <div class="text-slate-600"><strong>事由：</strong>${col[8]}</div>
-                                <div class="text-slate-500 text-[11px]"><strong>代理人：</strong>${col[11]} ${col[12] && col[12] !== '無' ? '/ ' + col[12] : ''}</div>
+                            `;
+                        } else if (isLevel2 && status === '待二階簽核') {
+                            actionButtonsHtml = `
+                                <div class="flex gap-2 pt-2 border-t">
+                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-2 shadow-sm">
+                                <div class="flex justify-between items-center border-b pb-1.5">
+                                    <span class="font-bold text-slate-800 text-sm">${empName} (${factory}廠)</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${status}</span>
+                                </div>
+                                <div class="text-slate-600"><strong>期間：</strong>${startDate} ~ ${endDate} (${days}天)</div>
+                                <div class="text-slate-600"><strong>行程：</strong>${route} (${transport})</div>
+                                <div class="text-slate-600"><strong>事由：</strong>${reason}</div>
+                                <div class="text-slate-600"><strong>費用/預支：</strong>${expense}</div>
+                                <div class="text-slate-500 text-[11px]"><strong>代理人：</strong>${proxy1} ${proxy2 && proxy2 !== '無' ? '/ ' + proxy2 : ''}</div>
+                                ${note ? `<div class="text-slate-600 text-[11px] bg-slate-100 p-1.5 rounded"><strong>簽核備註：</strong>${note}</div>` : ''}
+                                ${actionButtonsHtml}
                             </div>
                         `;
                     }).join('');
                 })
                 .catch(() => {
-                    listDiv.innerHTML = '<div class="text-center text-rose-500 py-4">讀取 CSV 資料失敗，請確認連結與發布權限。</div>';
+                    listDiv.innerHTML = '<div class="text-center text-rose-500 py-4">讀取 CSV 資料失敗，請確認 Google Sheet 發布與權限。</div>';
                 });
         }
     </script>
