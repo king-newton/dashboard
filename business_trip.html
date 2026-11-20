@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>金牛頓工業 | 出差申請與簽核</title>
+    <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f4f8; color: #334155; }
+        .tab-btn.active { background-color: #00a600; color: #ffffff; font-weight: bold; }
+        #auth-banner {
+            display: none;
+        }
+    </style>
+</head>
+<body class="pb-12">
+
+    <div id="auth-banner" class="max-w-xl mx-auto px-4 pt-3">
+        <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
+                    <i class="fa-solid fa-user-check text-amber-600"></i>
+                    <span>尚未偵測到入口網登入資訊 — 可直接點選或輸入身分</span>
+                </div>
+                <button type="button" onclick="quickLogin('E020', 'ERIC')" class="bg-[#00a600] hover:bg-[#008f00] text-white text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer shrink-0">
+                    一鍵以 E020 ERIC 登入
+                </button>
+            </div>
+            <form onsubmit="verifyEmp(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <input type="text" id="emp-id-input" placeholder="工號 (例: E020)" required autocomplete="off" class="bg-white border border-amber-200 text-center py-2 px-3 rounded-xl outline-none focus:border-[#00a600]">
+                <input type="text" id="emp-name-input" placeholder="姓名 (例: ERIC)" required autocomplete="off" class="bg-white border border-amber-200 text-center py-2 px-3 rounded-xl outline-none focus:border-[#00a600]">
+                <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-3 rounded-xl transition cursor-pointer">
+                    確認身分
+                </button>
+            </form>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+                <button type="button" onclick="quickLogin('E020', 'ERIC')" class="text-[11px] bg-white border border-slate-200 hover:border-[#00a600] px-2.5 py-1 rounded-lg text-slate-700 font-semibold cursor-pointer">E020 ERIC</button>
+                <button type="button" onclick="quickLogin('E001', '李彥綸')" class="text-[11px] bg-white border border-slate-200 hover:border-[#00a600] px-2.5 py-1 rounded-lg text-slate-700 font-semibold cursor-pointer">E001 李彥綸</button>
+                <button type="button" onclick="quickLogin('E002', '楊添仰')" class="text-[11px] bg-white border border-slate-200 hover:border-[#00a600] px-2.5 py-1 rounded-lg text-slate-700 font-semibold cursor-pointer">E002 楊添仰</button>
+            </div>
+            <div id="auth-msg" class="text-xs font-bold text-rose-600 min-h-[14px]"></div>
+        </div>
+    </div>
+
+    <header class="bg-[#00a600] text-white px-3 sm:px-4 py-2.5 shadow-md flex items-center justify-between sticky top-0 z-40 gap-2">
+        <div id="logout-trigger" class="flex items-center gap-2 min-w-0 cursor-pointer select-none" title="長按 2 秒可清除登入狀態重新驗證">
+            <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">
+            <span class="font-bold text-sm sm:text-base tracking-wide truncate">出差申請與簽核</span>
+            <span id="user-display" class="hidden md:inline-block text-xs bg-white/20 px-2.5 py-0.5 rounded-full font-medium shrink-0">
+                尚未登入
+            </span>
+        </div>
+
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <a href="index.html" class="bg-white text-[#00a600] hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm no-underline">
+                <i class="fa-solid fa-house"></i>
+                <span>入口網</span>
+            </a>
+            <button type="button" onclick="logoutSystem()" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>EXIT</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto p-4 space-y-4">
+
+        <div class="md:hidden flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
+            <span>目前登入身分</span>
+            <span id="user-display-mobile" class="font-bold text-[#00a600]">尚未登入</span>
+        </div>
+
+        <div class="flex bg-slate-200 p-1 rounded-xl text-xs font-semibold text-slate-600">
+            <button type="button" onclick="switchTab('apply')" id="tab-apply" class="tab-btn active flex-1 py-2 rounded-lg transition cursor-pointer">填寫出差單</button>
+            <button type="button" onclick="switchTab('review')" id="tab-review" class="tab-btn flex-1 py-2 rounded-lg transition cursor-pointer">簽核與審核紀錄</button>
+        </div>
+
+        <section id="sec-apply" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+            <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane text-[#00a600]"></i> 新增出差申請
+            </h2>
+
+            <form id="tripForm" onsubmit="submitTrip(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">所屬廠區</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台北" checked class="accent-[#00a600]"> 台北</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台中" class="accent-[#00a600]"> 台中</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台南" class="accent-[#00a600]"> 台南</label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">開始日期</label>
+                        <input type="date" id="startDate" required onchange="calcDays()" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">結束日期</label>
+                        <input type="date" id="endDate" required onchange="calcDays()" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                    </div>
+                </div>
+
+                <div class="text-right text-slate-500 font-semibold" id="dayCountText">共計：0 天</div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">行程地點 (起 ↔ 訖)</label>
+                    <input type="text" id="route" placeholder="例：新店 ↔ 彰化 / 新化產線" required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">出差事由與主要工作內容</label>
+                    <textarea id="reason" rows="2" placeholder="請填寫具體任務事項..." required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">主要交通工具</label>
+                        <select id="transport" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                            <option value="高鐵">高鐵</option>
+                            <option value="自行開車">自行開車</option>
+                            <option value="公司車">公司車</option>
+                            <option value="台鐵/客運">台鐵 / 客運</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">預估費用 / 預支需求</label>
+                        <input type="text" id="expense" placeholder="如：無 或 預支 3,000 元" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">第一職務代理人 (選填)</label>
+                        <select id="proxy1" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                            <option value="">無</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">第二職務代理人 (選填)</label>
+                        <select id="proxy2" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                            <option value="">無</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-[#00a600] hover:bg-[#008f00] text-white font-bold py-3 rounded-xl shadow-md transition text-sm cursor-pointer mt-2">
+                    送出出差申請
+                </button>
+            </form>
+        </section>
+
+        <section id="sec-review" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4 hidden">
+            <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center justify-between">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[#00a600]"></i> 審核與簽核紀錄</span>
+                <button type="button" onclick="loadTripRecords()" class="text-xs text-[#00a600] hover:underline cursor-pointer"><i class="fa-solid fa-rotate-right"></i> 重新整理</button>
+            </h2>
+
+            <div id="recordList" class="space-y-3 text-xs">
+                <div class="text-center text-slate-400 py-6">資料載入中...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
+
+        const MANAGER_PHONES = {
+            "ERIC": "",
+            "李彥綸": "",
+            "楊添仰": ""
+        };
+
+        // 一階簽核人：ERIC (E020)
+        const LEVEL1_MANAGER_IDS = ["E020"];
+
+        // 二階簽核人：北、中為李彥綸 (E001)；南為楊添仰 (E002)；ERIC (E020) 為管理員可代簽二階
+        function canApproveLevel2(empId, factory) {
+            const id = String(empId || "").trim().toUpperCase();
+            if (id === "E020") return true;
+
+            const fac = String(factory || "").trim();
+            if (fac === "台南" || fac === "南") {
+                return id === "E002";
+            }
+            return id === "E001";
+        }
+
+        function canApproveLevel1(empId) {
+            return LEVEL1_MANAGER_IDS.includes(String(empId || "").trim().toUpperCase());
+        }
+
+        const EMPLOYEE_LIST = [
+            { id: "E001", name: "李彥綸" },
+            { id: "E002", name: "楊添仰" },
+            { id: "E003", name: "陳品鈞" },
+            { id: "E005", name: "陳秀燕" },
+            { id: "E006", name: "高欣宜" },
+            { id: "E011", name: "余品橋" },
+            { id: "E012", name: "陳慧真" },
+            { id: "E020", name: "ERIC" },
+            { id: "E023", name: "陳靖昂" },
+            { id: "E026", name: "何成偉" },
+            { id: "E029", name: "李佩娟" },
+            { id: "E033", name: "曾晨杰" },
+            { id: "E035", name: "戴政宏" },
+            { id: "E036", name: "詹淑敏" }
+        ];
+
+        let currentUser = { id: "", name: "" };
+        let calculatedDays = 0;
+
+        function openWhatsAppMessage(targetName, messageText) {
+            const phone = (targetName && MANAGER_PHONES[targetName]) ? String(MANAGER_PHONES[targetName]).replace(/[^0-9]/g, "") : "";
+            const encoded = encodeURIComponent(messageText);
+            const waUrl = phone
+                ? `https://wa.me/${phone}?text=${encoded}`
+                : `https://api.whatsapp.com/send?text=${encoded}`;
+            window.open(waUrl, "_blank", "noopener,noreferrer");
+        }
+
+        function clearAuthStorage() {
+            localStorage.removeItem('king_newton_auth');
+            localStorage.removeItem('king_newton_emp_id');
+            localStorage.removeItem('king_newton_emp_name');
+        }
+
+        function showLoginModal() {
+            currentUser = { id: "", name: "" };
+            document.getElementById('user-display').innerText = "尚未登入";
+            document.getElementById('user-display-mobile').innerText = "尚未登入";
+            document.getElementById('auth-banner').style.display = 'block';
+        }
+
+        function applyUserSession(empId, empName) {
+            currentUser = { id: empId, name: empName };
+            const label = `${empId} ${empName}`;
+            document.getElementById('user-display').innerText = label;
+            document.getElementById('user-display-mobile').innerText = label;
+            document.getElementById('auth-banner').style.display = 'none';
+            refreshProxyOptions();
+        }
+
+        function refreshProxyOptions() {
+            const p1 = document.getElementById('proxy1');
+            const p2 = document.getElementById('proxy2');
+            const prev1 = p1.value;
+            const prev2 = p2.value;
+
+            p1.innerHTML = '<option value="">無</option>';
+            p2.innerHTML = '<option value="">無</option>';
+
+            EMPLOYEE_LIST.forEach(emp => {
+                if (emp.name.toUpperCase() !== currentUser.name.toUpperCase() && emp.id.toUpperCase() !== currentUser.id.toUpperCase()) {
+                    p1.add(new Option(`${emp.name} (${emp.id})`, emp.name));
+                    p2.add(new Option(`${emp.name} (${emp.id})`, emp.name));
+                }
+            });
+
+            if (prev1 && [...p1.options].some(o => o.value === prev1)) p1.value = prev1;
+            if (prev2 && [...p2.options].some(o => o.value === prev2)) p2.value = prev2;
+        }
+
+        function quickLogin(empId, empName) {
+            const matchedEmp = EMPLOYEE_LIST.find(emp =>
+                emp.id.toUpperCase() === String(empId || "").trim().toUpperCase() &&
+                emp.name.toUpperCase() === String(empName || "").trim().toUpperCase()
+            );
+            if (!matchedEmp) return;
+            localStorage.setItem('king_newton_auth', 'true');
+            localStorage.setItem('king_newton_emp_id', matchedEmp.id);
+            localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+            document.getElementById('auth-msg').innerText = "";
+            applyUserSession(matchedEmp.id, matchedEmp.name);
+        }
+
+        function verifyEmp(e) {
+            e.preventDefault();
+            const inputId = document.getElementById('emp-id-input').value.trim().toUpperCase();
+            const inputName = document.getElementById('emp-name-input').value.trim().toUpperCase();
+            const msgDiv = document.getElementById('auth-msg');
+
+            const matchedEmp = EMPLOYEE_LIST.find(emp =>
+                emp.id.toUpperCase() === inputId && emp.name.toUpperCase() === inputName
+            );
+
+            if (matchedEmp) {
+                localStorage.setItem('king_newton_auth', 'true');
+                localStorage.setItem('king_newton_emp_id', matchedEmp.id);
+                localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+                msgDiv.innerText = "";
+                applyUserSession(matchedEmp.id, matchedEmp.name);
+            } else {
+                msgDiv.innerText = "❌ 工號與姓名不符，請重新輸入！";
+            }
+        }
+
+        function logoutSystem() {
+            if (confirm("確定要登出系統嗎？")) {
+                clearAuthStorage();
+                window.location.href = "index.html";
+            }
+        }
+
+        let pressTimer = null;
+        const logoutTrigger = document.getElementById('logout-trigger');
+        logoutTrigger.addEventListener('mousedown', () => { pressTimer = setTimeout(logoutSystem, 2000); });
+        logoutTrigger.addEventListener('touchstart', () => { pressTimer = setTimeout(logoutSystem, 2000); });
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            logoutTrigger.addEventListener(evt, () => clearTimeout(pressTimer));
+        });
+
+        function resolveEmpIdFromName(empName) {
+            const cleanName = String(empName || "").trim().toUpperCase();
+            if (!cleanName) return "";
+            const found = EMPLOYEE_LIST.find(emp =>
+                emp.name.toUpperCase() === cleanName ||
+                cleanName.includes(emp.name.toUpperCase())
+            );
+            return found ? found.id : "";
+        }
+
+        function resolveEmpNameFromId(empId) {
+            const cleanId = String(empId || "").trim().toUpperCase();
+            if (!cleanId) return "";
+            const found = EMPLOYEE_LIST.find(emp => emp.id.toUpperCase() === cleanId);
+            return found ? found.name : "";
+        }
+
+        function readCookieMap() {
+            const map = {};
+            try {
+                const raw = document.cookie || '';
+                raw.split(';').forEach(pair => {
+                    const idx = pair.indexOf('=');
+                    if (idx > -1) {
+                        const k = decodeURIComponent(pair.slice(0, idx).trim());
+                        const v = decodeURIComponent(pair.slice(idx + 1).trim());
+                        if (k) map[k] = v;
+                    }
+                });
+            } catch (e) {}
+            return map;
+        }
+
+        function readPortalSession() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hashStr = (window.location.hash || '').replace(/^#/, '');
+            const hashParams = new URLSearchParams(hashStr.includes('?') ? hashStr.split('?')[1] : hashStr);
+
+            const qId = (
+                urlParams.get('empId') || urlParams.get('emp_id') || urlParams.get('id') ||
+                hashParams.get('empId') || hashParams.get('emp_id') || hashParams.get('id') || ''
+            ).trim().toUpperCase();
+            const qName = (
+                urlParams.get('empName') || urlParams.get('emp_name') || urlParams.get('name') ||
+                hashParams.get('empName') || hashParams.get('emp_name') || hashParams.get('name') || ''
+            ).trim();
+
+            if (qId || qName) {
+                const finalId = qId || resolveEmpIdFromName(qName);
+                const finalName = qName || resolveEmpNameFromId(qId);
+                if (finalId && finalName) {
+                    return { isAuth: true, empId: finalId, empName: finalName };
+                }
+            }
+
+            const possibleAuthKeys = [
+                'king_newton_auth',
+                'isAuth',
+                'is_auth',
+                'portal_auth',
+                'auth_status',
+                'logged_in',
+                'isLoggedIn'
+            ];
+            const possibleIdKeys = [
+                'king_newton_emp_id',
+                'empId',
+                'emp_id',
+                'employeeId',
+                'employee_id',
+                'userId',
+                'user_id'
+            ];
+            const possibleNameKeys = [
+                'king_newton_emp_name',
+                'empName',
+                'emp_name',
+                'employeeName',
+                'employee_name',
+                'userName',
+                'user_name',
+                'name'
+            ];
+
+            const cookieMap = readCookieMap();
+            const cookieStorage = {
+                length: Object.keys(cookieMap).length,
+                key: (i) => Object.keys(cookieMap)[i] || null,
+                getItem: (k) => Object.prototype.hasOwnProperty.call(cookieMap, k) ? cookieMap[k] : null
+            };
+            const storages = [];
+            try { storages.push(window.localStorage); } catch (e) {}
+            try { storages.push(window.sessionStorage); } catch (e) {}
+            storages.push(cookieStorage);
+
+            for (const store of storages) {
+                let rawId = "";
+                let rawName = "";
+                let rawAuth = "";
+
+                for (const k of possibleIdKeys) {
+                    const v = store.getItem(k);
+                    if (v && String(v).trim()) {
+                        rawId = String(v).trim().toUpperCase();
+                        break;
+                    }
+                }
+                for (const k of possibleNameKeys) {
+                    const v = store.getItem(k);
+                    if (v && String(v).trim()) {
+                        rawName = String(v).trim();
+                        break;
+                    }
+                }
+                for (const k of possibleAuthKeys) {
+                    const v = store.getItem(k);
+                    if (v && String(v).trim()) {
+                        rawAuth = String(v).trim().toLowerCase();
+                        break;
+                    }
+                }
+
+                // 若有儲存 JSON 物件格式的使用者資訊，也一併嘗試解析
+                if (!rawId || !rawName) {
+                    for (let i = 0; i < store.length; i++) {
+                        const key = store.key(i);
+                        const val = store.getItem(key);
+                        if (!val || (!val.startsWith('{') && !val.startsWith('['))) continue;
+                        try {
+                            const parsed = JSON.parse(val);
+                            if (parsed && typeof parsed === 'object') {
+                                const obj = parsed.user || parsed.employee || parsed.currentUser || parsed;
+                                if (!rawId && (obj.empId || obj.emp_id || obj.id || obj.employeeId)) {
+                                    rawId = String(obj.empId || obj.emp_id || obj.id || obj.employeeId).trim().toUpperCase();
+                                }
+                                if (!rawName && (obj.empName || obj.emp_name || obj.name || obj.employeeName)) {
+                                    rawName = String(obj.empName || obj.emp_name || obj.name || obj.employeeName).trim();
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                }
+
+                if (!rawId && rawName) rawId = resolveEmpIdFromName(rawName);
+                if (!rawName && rawId) rawName = resolveEmpNameFromId(rawId);
+
+                const authFlagValid = (rawAuth === 'true' || rawAuth === '1' || rawAuth === 'yes' || rawAuth === 'logged_in');
+                if ((authFlagValid && rawId && rawName) || (rawId && rawName)) {
+                    return { isAuth: true, empId: rawId, empName: rawName };
+                }
+            }
+
+            return { isAuth: false, empId: "", empName: "" };
+        }
+
+        function parseCombinedEmpString(rawText) {
+            const text = String(rawText || "").trim();
+            if (!text) return { empId: "", empName: "" };
+
+            const idMatch = text.match(/\b(E\d{2,4})\b/i);
+            const foundId = idMatch ? idMatch[1].toUpperCase() : resolveEmpIdFromName(text);
+
+            let cleanedName = text
+                .replace(/\b(E\d{2,4})\b/ig, "")
+                .replace(/[\(\)\-\/\:\|，,]/g, " ")
+                .trim();
+
+            const foundName = resolveEmpNameFromId(foundId) || (cleanedName ? (resolveEmpIdFromName(cleanedName) ? EMPLOYEE_LIST.find(e => e.id === resolveEmpIdFromName(cleanedName)).name : cleanedName) : "");
+            return { empId: foundId || "", empName: foundName || "" };
+        }
+
+        function readWindowNameAndFrames() {
+            const candidates = [];
+            try {
+                if (window.name) candidates.push(window.name);
+            } catch (e) {}
+
+            const framesToTry = [];
+            try { if (window.opener && window.opener !== window) framesToTry.push(window.opener); } catch (e) {}
+            try { if (window.parent && window.parent !== window) framesToTry.push(window.parent); } catch (e) {}
+
+            for (const win of framesToTry) {
+                try {
+                    if (win.localStorage) {
+                        const id = (win.localStorage.getItem('king_newton_emp_id') || win.localStorage.getItem('empId') || '').trim().toUpperCase();
+                        const name = (win.localStorage.getItem('king_newton_emp_name') || win.localStorage.getItem('empName') || '').trim();
+                        if (id || name) {
+                            const finalId = id || resolveEmpIdFromName(name);
+                            const finalName = name || resolveEmpNameFromId(id);
+                            if (finalId && finalName) return { isAuth: true, empId: finalId, empName: finalName };
+                        }
+                    }
+                } catch (e) {}
+                try {
+                    if (win.sessionStorage) {
+                        const id = (win.sessionStorage.getItem('king_newton_emp_id') || win.sessionStorage.getItem('empId') || '').trim().toUpperCase();
+                        const name = (win.sessionStorage.getItem('king_newton_emp_name') || win.sessionStorage.getItem('empName') || '').trim();
+                        if (id || name) {
+                            const finalId = id || resolveEmpIdFromName(name);
+                            const finalName = name || resolveEmpNameFromId(id);
+                            if (finalId && finalName) return { isAuth: true, empId: finalId, empName: finalName };
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            for (const raw of candidates) {
+                if (!raw) continue;
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        const obj = parsed.user || parsed.employee || parsed.currentUser || parsed;
+                        const id = String(obj.empId || obj.emp_id || obj.id || obj.employeeId || '').trim().toUpperCase();
+                        const name = String(obj.empName || obj.emp_name || obj.name || obj.employeeName || '').trim();
+                        const finalId = id || resolveEmpIdFromName(name);
+                        const finalName = name || resolveEmpNameFromId(id);
+                        if (finalId && finalName) return { isAuth: true, empId: finalId, empName: finalName };
+                    }
+                } catch (e) {}
+                const combo = parseCombinedEmpString(raw);
+                if (combo.empId && combo.empName) {
+                    return { isAuth: true, empId: combo.empId, empName: combo.empName };
+                }
+            }
+
+            return { isAuth: false, empId: "", empName: "" };
+        }
+
+        function scanAllStoragesForEmp() {
+            const storages = [];
+            try { storages.push(window.localStorage); } catch (e) {}
+            try { storages.push(window.sessionStorage); } catch (e) {}
+
+            const cookieMap = readCookieMap();
+            const cookieKeys = Object.keys(cookieMap);
+
+            let foundId = "";
+            let foundName = "";
+
+            const inspectKeyVal = (k, v) => {
+                if (v === null || v === undefined) return;
+                const keyStr = String(k || "").trim().toLowerCase();
+                const valStr = String(v || "").trim();
+                if (!valStr) return;
+
+                // 先嘗試 JSON
+                if ((valStr.startsWith("{") && valStr.endsWith("}")) || (valStr.startsWith("[") && valStr.endsWith("]"))) {
+                    try {
+                        const parsed = JSON.parse(valStr);
+                        const targets = Array.isArray(parsed) ? parsed : [parsed];
+                        for (const item of targets) {
+                            if (!item || typeof item !== "object") continue;
+                            const obj = item.user || item.employee || item.currentUser || item.data || item;
+                            if (!obj || typeof obj !== "object") continue;
+                            const cId = String(obj.empId || obj.emp_id || obj.employeeId || obj.employee_id || obj.userId || obj.user_id || obj.id || "").trim().toUpperCase();
+                            const cName = String(obj.empName || obj.emp_name || obj.employeeName || obj.employee_name || obj.userName || obj.user_name || obj.name || "").trim();
+                            if (cId && /^E\d{2,4}$/i.test(cId) && !foundId) foundId = cId.toUpperCase();
+                            if (cName && !foundName) foundName = cName;
+                        }
+                    } catch (e) {}
+                }
+
+                // 依鍵名判斷
+                if (!foundId && (keyStr.includes("id") || keyStr.includes("emp") || keyStr.includes("user") || keyStr.includes("account") || keyStr.includes("login"))) {
+                    const idMatch = valStr.match(/\b(E\d{2,4})\b/i);
+                    if (idMatch) {
+                        foundId = idMatch[1].toUpperCase();
+                    } else if (/^E\d{2,4}$/i.test(valStr)) {
+                        foundId = valStr.toUpperCase();
+                    }
+                }
+
+                if (!foundName && (keyStr.includes("name") || keyStr.includes("emp") || keyStr.includes("user") || keyStr.includes("auth") || keyStr.includes("login") || keyStr.includes("staff"))) {
+                    const byId = resolveEmpIdFromName(valStr);
+                    if (byId) {
+                        const matched = EMPLOYEE_LIST.find(e => e.id === byId);
+                        if (matched) foundName = matched.name;
+                    } else if (!/^E\d{2,4}$/i.test(valStr) && valStr.length <= 20 && !valStr.includes("http")) {
+                        const combo = parseCombinedEmpString(valStr);
+                        if (combo.empId && !foundId) foundId = combo.empId;
+                        if (combo.empName) foundName = combo.empName;
+                    }
+                }
+
+                // 單純值比對（例如值本身就是 "E020" 或 "ERIC"）
+                if (!foundId && /^E\d{2,4}$/i.test(valStr)) {
+                    const upper = valStr.toUpperCase();
+                    if (EMPLOYEE_LIST.some(e => e.id === upper)) {
+                        foundId = upper;
+                    }
+                }
+                if (!foundName) {
+                    const matchedEmp = EMPLOYEE_LIST.find(e => e.name.toUpperCase() === valStr.toUpperCase());
+                    if (matchedEmp) {
+                        foundName = matchedEmp.name;
+                        if (!foundId) foundId = matchedEmp.id;
+                    }
+                }
+            };
+
+            for (const store of storages) {
+                try {
+                    for (let i = 0; i < store.length; i++) {
+                        const k = store.key(i);
+                        const v = store.getItem(k);
+                        inspectKeyVal(k, v);
+                    }
+                } catch (e) {}
+            }
+
+            for (const ck of cookieKeys) {
+                inspectKeyVal(ck, cookieMap[ck]);
+            }
+
+            if (foundId && !foundName) foundName = resolveEmpNameFromId(foundId);
+            if (foundName && !foundId) foundId = resolveEmpIdFromName(foundName);
+
+            return {
+                isAuth: Boolean(foundId && foundName),
+                empId: foundId || "",
+                empName: foundName || ""
+            };
+        }
+
+        function initPage() {
+            if (window.location.hash === '#reset') {
+                clearAuthStorage();
+                showLoginModal();
+                return;
+            }
+            try {
+                let session = readPortalSession();
+                if (!session.isAuth) {
+                    session = readWindowNameAndFrames();
+                }
+                if (!session.isAuth) {
+                    session = scanAllStoragesForEmp();
+                }
+                if (session.isAuth && session.empId && session.empName) {
+                    localStorage.setItem('king_newton_auth', 'true');
+                    localStorage.setItem('king_newton_emp_id', session.empId);
+                    localStorage.setItem('king_newton_emp_name', session.empName);
+                    applyUserSession(session.empId, session.empName);
+                } else {
+                    showLoginModal();
+                }
+            } catch (err) {
+                showLoginModal();
+            }
+        }
+
+        window.addEventListener('message', (event) => {
+            try {
+                const data = event && event.data;
+                if (!data || typeof data !== 'object') return;
+                const payload = data.user || data.employee || data.currentUser || data;
+                const rawId = String(payload.empId || payload.emp_id || payload.employeeId || '').trim().toUpperCase();
+                const rawName = String(payload.empName || payload.emp_name || payload.employeeName || payload.name || '').trim();
+                const finalId = rawId || resolveEmpIdFromName(rawName);
+                const finalName = rawName || resolveEmpNameFromId(rawId);
+                if (finalId && finalName) {
+                    localStorage.setItem('king_newton_auth', 'true');
+                    localStorage.setItem('king_newton_emp_id', finalId);
+                    localStorage.setItem('king_newton_emp_name', finalName);
+                    applyUserSession(finalId, finalName);
+                }
+            } catch (e) {}
+        });
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPage);
+        } else {
+            initPage();
+        }
+
+        function calcDays() {
+            const startVal = document.getElementById('startDate').value;
+            const endVal = document.getElementById('endDate').value;
+            if (!startVal || !endVal) {
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "共計：0 天";
+                return;
+            }
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            if (end >= start) {
+                const diffTime = Math.abs(end - start);
+                calculatedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('dayCountText').innerText = `共計：${calculatedDays} 天`;
+            } else {
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "結束日期不可早於開始日期";
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-apply').classList.toggle('active', tab === 'apply');
+            document.getElementById('tab-review').classList.toggle('active', tab === 'review');
+            document.getElementById('sec-apply').classList.toggle('hidden', tab !== 'apply');
+            document.getElementById('sec-review').classList.toggle('hidden', tab !== 'review');
+
+            if (tab === 'review') {
+                loadTripRecords();
+            }
+        }
+
+        function submitTrip(e) {
+            e.preventDefault();
+            if (!currentUser.id || !currentUser.name) {
+                showLoginModal();
+                return;
+            }
+            if (calculatedDays <= 0) {
+                alert("請確認開始與結束日期是否正確！");
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "提交中...";
+
+            const payload = {
+                action: "createTrip",
+                empId: currentUser.id,
+                empName: currentUser.name,
+                factory: document.querySelector('input[name="factory"]:checked').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                days: calculatedDays,
+                route: document.getElementById('route').value.trim(),
+                reason: document.getElementById('reason').value.trim(),
+                transport: document.getElementById('transport').value,
+                expense: document.getElementById('expense').value.trim() || "無",
+                proxy1: document.getElementById('proxy1').value || "無",
+                proxy2: document.getElementById('proxy2').value || "無",
+                status: "待一階簽核"
+            };
+
+            fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert("🎉 出差單已成功送出！");
+
+                const waText = [
+                    "【出差審核通知】",
+                    `同仁：${payload.empName}`,
+                    `廠區：${payload.factory}廠`,
+                    `地點/行程：${payload.route}`,
+                    `期間：${payload.startDate} ~ ${payload.endDate}（${payload.days} 天）`,
+                    `事由：${payload.reason}`,
+                    "請至金牛頓系統進行一階簽核。"
+                ].join("
+");
+
+                if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
+                    openWhatsAppMessage("ERIC", waText);
+                }
+
+                document.getElementById('tripForm').reset();
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "共計：0 天";
+                refreshProxyOptions();
+                btn.disabled = false;
+                btn.innerText = "送出出差申請";
+                switchTab('review');
+                setTimeout(loadTripRecords, 1500);
+            }).catch(err => {
+                alert("送出失敗：" + err);
+                btn.disabled = false;
+                btn.innerText = "送出出差申請";
+            });
+        }
+
+        function handleReview(tripId, empId, applicantName, factory, route, days, startDate, stage, decision) {
+            const actionLabel = decision === 'approve' ? '核准' : '駁回';
+            const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
+            if (note === null) return;
+
+            let nextStatus = "待一階簽核";
+            if (decision === 'reject') {
+                nextStatus = "已駁回";
+            } else if (stage === 1) {
+                nextStatus = "待二階簽核";
+            } else if (stage === 2) {
+                nextStatus = "已核准";
+            }
+
+            const payload = {
+                action: "reviewTrip",
+                tripId: tripId,
+                empId: empId,
+                startDate: startDate,
+                stage: stage,
+                decision: decision,
+                newStatus: nextStatus,
+                reviewerNote: `[${stage}階 ${currentUser.name} - ${actionLabel}] ${note}`
+            };
+
+            fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert(`✅ 第${stage}階簽核完成，目前狀態：${nextStatus}`);
+
+                if (stage === 1 && decision === 'approve') {
+                    const defaultChoice = (String(factory || "").trim() === "台南" || String(factory || "").trim() === "南") ? "2" : "1";
+                    const targetManager = prompt(
+                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
+請輸入：1 (李彥綸-台北/台中) 或 2 (楊添仰-台南)",
+                        defaultChoice
+                    );
+
+                    let nextManagerName = "";
+                    if (targetManager === "1") nextManagerName = "李彥綸";
+                    else if (targetManager === "2") nextManagerName = "楊添仰";
+
+                    if (nextManagerName) {
+                        const waText = [
+                            "【出差二階簽核通知】",
+                            `一階主管 ${currentUser.name} 已核准。`,
+                            `申請同仁：${applicantName}`,
+                            `廠區：${factory}廠`,
+                            `地點/行程：${route} (${days}天)`,
+                            `請 ${nextManagerName} 主管至系統進行二階最終核准。`
+                        ].join("
+");
+
+                        openWhatsAppMessage(nextManagerName, waText);
+                    }
+                } else if (stage === 2 || decision === 'reject') {
+                    const waText = [
+                        "【出差簽核結果通知】",
+                        `簽核主管：${currentUser.name}（第${stage}階${actionLabel}）`,
+                        `申請同仁：${applicantName}`,
+                        `廠區：${factory}廠`,
+                        `地點/行程：${route} (${days}天)`,
+                        `最新狀態：${nextStatus}`,
+                        `備註：${note}`
+                    ].join("
+");
+
+                    if (confirm("是否立即開啟 WhatsApp 傳送本次簽核結果通知？")) {
+                        openWhatsAppMessage("", waText);
+                    }
+                }
+
+                setTimeout(loadTripRecords, 1500);
+            });
+        }
+
+        function loadTripRecords() {
+            const listDiv = document.getElementById('recordList');
+            listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">資料讀取中...</div>';
+
+            const sep = GAS_WEB_APP_URL.includes('?') ? '&' : '?';
+            fetch(`${GAS_WEB_APP_URL}${sep}action=getBusinessTrips&t=${new Date().getTime()}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(result => {
+                    if (!result || result.status !== 'success' || !Array.isArray(result.data) || result.data.length === 0) {
+                        listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
+                        return;
+                    }
+
+                    const isLevel1 = canApproveLevel1(currentUser.id);
+                    const dataRows = result.data.slice().reverse();
+
+                    listDiv.innerHTML = dataRows.map(item => {
+                        const tripId = item.id || '';
+                        const empId = item.empId || '';
+                        const empName = item.empName || '';
+                        const factory = item.factory || '';
+                        const startDate = item.startDate || '';
+                        const endDate = item.endDate || '';
+                        const days = item.days || '';
+                        const route = item.route || '';
+                        const reason = item.reason || '';
+                        const transport = item.transport || '';
+                        const expense = item.expense || '無';
+                        const proxy1 = item.proxy1 || '';
+                        const proxy2 = item.proxy2 || '無';
+                        const status = item.status || '待一階簽核';
+                        const note = item.note || '';
+
+                        const isLevel2 = canApproveLevel2(currentUser.id, factory);
+                        const proxies = [proxy1, proxy2].filter(p => p && p !== '無');
+                        const proxyDisplay = proxies.length > 0 ? proxies.join(' / ') : '無';
+
+                        let badgeClass = 'bg-amber-100 text-amber-700';
+                        if (status.includes('核准')) badgeClass = 'bg-emerald-100 text-emerald-700';
+                        else if (status.includes('駁回')) badgeClass = 'bg-rose-100 text-rose-700';
+                        else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
+
+                        const safeTripId = String(tripId).replace(/'/g, "\\'");
+                        const safeEmpId = String(empId).replace(/'/g, "\\'");
+                        const safeEmpName = String(empName).replace(/'/g, "\\'");
+                        const safeFactory = String(factory).replace(/'/g, "\\'");
+                        const safeRoute = String(route).replace(/'/g, "\\'");
+                        const safeDays = String(days).replace(/'/g, "\\'");
+                        const safeStartDate = String(startDate).replace(/'/g, "\\'");
+
+                        let actionButtonsHtml = '';
+                        if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
+                            actionButtonsHtml = `
+                                <div class="flex gap-2 pt-2 border-t">
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
+                                </div>
+                            `;
+                        } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
+                            actionButtonsHtml = `
+                                <div class="flex gap-2 pt-2 border-t">
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-2 shadow-sm">
+                                <div class="flex justify-between items-center border-b pb-1.5">
+                                    <span class="font-bold text-slate-800 text-sm">${empName} (${factory}廠)</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${status}</span>
+                                </div>
+                                <div class="text-slate-600"><strong>期間：</strong>${startDate} ~ ${endDate} (${days}天)</div>
+                                <div class="text-slate-600"><strong>行程：</strong>${route} (${transport})</div>
+                                <div class="text-slate-600"><strong>事由：</strong>${reason}</div>
+                                <div class="text-slate-600"><strong>費用/預支：</strong>${expense}</div>
+                                <div class="text-slate-500 text-[11px]"><strong>代理人：</strong>${proxyDisplay}</div>
+                                ${note ? `<div class="text-slate-600 text-[11px] bg-slate-100 p-1.5 rounded"><strong>簽核備註：</strong>${note}</div>` : ''}
+                                ${actionButtonsHtml}
+                            </div>
+                        `;
+                    }).join('');
+                })
+                .catch(err => {
+                    listDiv.innerHTML = `<div class="text-center text-rose-500 py-4">讀取紀錄失敗：${err.message}</div>`;
+                });
+        }
+    </script>
+</body>
+</html>
