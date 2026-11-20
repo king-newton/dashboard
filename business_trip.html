@@ -2,486 +2,629 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>金牛頓公司活動行事曆</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>金牛頓工業 | 出差申請與簽核</title>
+    <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- 電腦版樣式：完全保持不動 --- */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
-        h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
-
-        select, input[type="date"], input[type="text"], input[type="number"], textarea {
-            height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; vertical-align: middle;
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f4f8; color: #334155; }
+        .tab-btn.active { background-color: #00a600; color: #ffffff; font-weight: bold; }
+        #auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
         }
-        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
-        th { background-color: #e3f2fd; color: #0d47a1; }
-
-        #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; background: white; }
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
-
-        #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
-        #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
-        #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
-
-        .hide-sun th:nth-child(1), .hide-sun td:nth-child(1) { display: none !important; }
-        .hide-sat th:nth-child(7), .hide-sat td:nth-child(7) { display: none !important; }
-
-        .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
-        .trip-record { background-color: #00897b !important; color: white !important; border-left: 4px solid #004d40 !important; }
-        .activity-record { background-color: #673ab7 !important; color: white !important; }
-        .golden-record { background-color: #0d47a1 !important; color: white !important; }
-        .holiday-record { background-color: #e91e63 !important; color: white !important; }
-
-        .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
-        .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
-
-        /* --- 手機版專屬修正區 (只在螢幕 600px 以下生效) --- */
-        #mobileCards { display: none; padding: 10px; background: #f1f3f4; }
-
-        @media (max-width: 600px) {
-            #calendar { display: none !important; }
-            #mobileCards { display: block; }
-
-            #currentYearMonth {
-                font-size: 0.8em !important;
-                white-space: nowrap !important;
-                margin: 0 5px;
-            }
-            #calendarHeader {
-                padding: 10px 5px !important;
-            }
-            #calendarHeader button {
-                padding: 5px 8px !important;
-            }
-
-            .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-            .card-date { font-weight: bold; color: #0d47a1; border-bottom: 2px solid #e3f2fd; margin-bottom: 8px; font-size: 1.1em; display: flex; justify-content: space-between; }
-            .card-weekend { color: #d32f2f; }
-        }
-
-        @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
     </style>
 </head>
-<body>
+<body class="pb-12">
 
-    <h2>📊 金牛頓公司活動行事曆</h2>
-
-    <div id="calendarContainer">
-        <div id="calendarHeader">
-            <button type="button" onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth">2026年 3月</span>
-            <button type="button" onclick="changeMonth(1)">下個月 ▶</button>
-        </div>
-        <table id="calendar">
-            <thead>
-                <tr>
-                    <th>日</th>
-                    <th><button type="button" onclick="toggleSun()" style="cursor:pointer; margin-right:5px;">◀</button>一</th>
-                    <th>二</th><th>三</th><th>四</th>
-                    <th>五<button type="button" onclick="toggleSat()" style="cursor:pointer; margin-left:5px;">▶</button></th>
-                    <th>六</th>
-                </tr>
-            </thead>
-            <tbody id="calendarBody"></tbody>
-        </table>
-        <div id="mobileCards"></div>
-    </div>
-
-    <div class="suggestion-display-box">
-        <h3 style="margin-top:0; color: #e65100;">📋 公司活動建議內容</h3>
-        <table id="suggestionTable">
-            <thead><tr><th style="width:25%">項目</th><th style="width:75%">建議詳情</th></tr></thead>
-            <tbody id="suggestionList"></tbody>
-        </table>
-    </div>
-
-    <div class="action-section">
-        <h3 style="margin-top:0;">🔍 紀錄查詢、備份與列印</h3>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <select id="queryNameSelect" style="min-width:150px; height:40px;"></select>
-            <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
-            <button type="button" onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer;">查詢</button>
-            <button type="button" onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
-            <button type="button" onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
-            <button type="button" onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
-            <button type="button" onclick="toggleAllWeekend()" style="height:40px; background:#455a64; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏週末</button>
+    <div id="auth-modal">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl border border-slate-100 text-center space-y-4">
+            <div class="w-14 h-14 bg-emerald-100 text-[#00a600] rounded-2xl flex items-center justify-center mx-auto text-xl shadow-sm">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-extrabold text-slate-800 m-0">金牛頓出差簽核系統</h2>
+                <p class="text-xs text-slate-500 mt-1 m-0">請輸入您的工號與姓名進行身份確認</p>
+            </div>
+            <form onsubmit="verifyEmp(event)" class="space-y-3">
+                <div>
+                    <input type="text" id="emp-id-input" placeholder="請輸入工號 (例: E001)" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
+                </div>
+                <div>
+                    <input type="text" id="emp-name-input" placeholder="請輸入姓名" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
+                </div>
+                <div id="auth-msg" class="text-xs font-bold text-rose-500 min-h-[16px]"></div>
+                <button type="submit" class="w-full bg-[#00a600] hover:bg-[#008f00] text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition cursor-pointer text-sm">
+                    確認並進入系統
+                </button>
+            </form>
         </div>
     </div>
 
-    <div id="queryResultArea"></div>
+    <header class="bg-[#00a600] text-white px-3 sm:px-4 py-2.5 shadow-md flex items-center justify-between sticky top-0 z-40 gap-2">
+        <div id="logout-trigger" class="flex items-center gap-2 min-w-0 cursor-pointer select-none" title="長按 2 秒可清除登入狀態重新驗證">
+            <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">
+            <span class="font-bold text-sm sm:text-base tracking-wide truncate">出差申請與簽核</span>
+            <span id="user-display" class="hidden md:inline-block text-xs bg-white/20 px-2.5 py-0.5 rounded-full font-medium shrink-0">
+                尚未登入
+            </span>
+        </div>
+
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <a href="index.html" class="bg-white text-[#00a600] hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm no-underline">
+                <i class="fa-solid fa-house"></i>
+                <span>入口網</span>
+            </a>
+            <button type="button" onclick="logoutSystem()" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>EXIT</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto p-4 space-y-4">
+
+        <div class="md:hidden flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
+            <span>目前登入身分</span>
+            <span id="user-display-mobile" class="font-bold text-[#00a600]">尚未登入</span>
+        </div>
+
+        <div class="flex bg-slate-200 p-1 rounded-xl text-xs font-semibold text-slate-600">
+            <button type="button" onclick="switchTab('apply')" id="tab-apply" class="tab-btn active flex-1 py-2 rounded-lg transition cursor-pointer">填寫出差單</button>
+            <button type="button" onclick="switchTab('review')" id="tab-review" class="tab-btn flex-1 py-2 rounded-lg transition cursor-pointer">簽核與審核紀錄</button>
+        </div>
+
+        <section id="sec-apply" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+            <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane text-[#00a600]"></i> 新增出差申請
+            </h2>
+
+            <form id="tripForm" onsubmit="submitTrip(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">所屬廠區</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台北" checked class="accent-[#00a600]"> 台北</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台中" class="accent-[#00a600]"> 台中</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台南" class="accent-[#00a600]"> 台南</label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">開始日期</label>
+                        <input type="date" id="startDate" required onchange="calcDays()" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">結束日期</label>
+                        <input type="date" id="endDate" required onchange="calcDays()" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                    </div>
+                </div>
+
+                <div class="text-right text-slate-500 font-semibold" id="dayCountText">共計：0 天</div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">行程地點 (起 ↔ 訖)</label>
+                    <input type="text" id="route" placeholder="例：新店 ↔ 彰化 / 新化產線" required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">出差事由與主要工作內容</label>
+                    <textarea id="reason" rows="2" placeholder="請填寫具體任務事項..." required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">主要交通工具</label>
+                        <select id="transport" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                            <option value="高鐵">高鐵</option>
+                            <option value="自行開車">自行開車</option>
+                            <option value="公司車">公司車</option>
+                            <option value="台鐵/客運">台鐵 / 客運</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">預估費用 / 預支需求</label>
+                        <input type="text" id="expense" placeholder="如：無 或 預支 3,000 元" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">第一職務代理人</label>
+                        <select id="proxy1" required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                            <option value="">請選擇同仁</option>
+                            <option value="李彥綸">李彥綸 (E001)</option>
+                            <option value="楊添仰">楊添仰 (E002)</option>
+                            <option value="陳品鈞">陳品鈞 (E003)</option>
+                            <option value="陳秀燕">陳秀燕 (E005)</option>
+                            <option value="高欣宜">高欣宜 (E006)</option>
+                            <option value="余品橋">余品橋 (E011)</option>
+                            <option value="陳慧真">陳慧真 (E012)</option>
+                            <option value="ERIC">ERIC (E020)</option>
+                            <option value="陳靖昂">陳靖昂 (E023)</option>
+                            <option value="何成偉">何成偉 (E026)</option>
+                            <option value="李佩娟">李佩娟 (E029)</option>
+                            <option value="曾晨杰">曾晨杰 (E033)</option>
+                            <option value="戴政宏">戴政宏 (E035)</option>
+                            <option value="詹淑敏">詹淑敏 (E036)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">第二職務代理人 (超過3天)</label>
+                        <select id="proxy2" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                            <option value="">無</option>
+                            <option value="李彥綸">李彥綸 (E001)</option>
+                            <option value="楊添仰">楊添仰 (E002)</option>
+                            <option value="陳品鈞">陳品鈞 (E003)</option>
+                            <option value="陳秀燕">陳秀燕 (E005)</option>
+                            <option value="高欣宜">高欣宜 (E006)</option>
+                            <option value="余品橋">余品橋 (E011)</option>
+                            <option value="陳慧真">陳慧真 (E012)</option>
+                            <option value="ERIC">ERIC (E020)</option>
+                            <option value="陳靖昂">陳靖昂 (E023)</option>
+                            <option value="何成偉">何成偉 (E026)</option>
+                            <option value="李佩娟">李佩娟 (E029)</option>
+                            <option value="曾晨杰">曾晨杰 (E033)</option>
+                            <option value="戴政宏">戴政宏 (E035)</option>
+                            <option value="詹淑敏">詹淑敏 (E036)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-[#00a600] hover:bg-[#008f00] text-white font-bold py-3 rounded-xl shadow-md transition text-sm cursor-pointer mt-2">
+                    送出出差申請
+                </button>
+            </form>
+        </section>
+
+        <section id="sec-review" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4 hidden">
+            <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center justify-between">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[#00a600]"></i> 審核與簽核紀錄</span>
+                <button type="button" onclick="loadTripRecords()" class="text-xs text-[#00a600] hover:underline cursor-pointer"><i class="fa-solid fa-rotate-right"></i> 重新整理</button>
+            </h2>
+
+            <div id="recordList" class="space-y-3 text-xs">
+                <div class="text-center text-slate-400 py-6">資料載入中...</div>
+            </div>
+        </section>
+
+    </main>
 
     <script>
-        const holidayList = [
-            { date: "2026-01-01", name: "元旦" },
-            { date: "2026-02-14", name: "春節" }, { date: "2026-02-15", name: "春節" }, { date: "2026-02-16", name: "春節" },
-            { date: "2026-02-17", name: "春節" }, { date: "2026-02-18", name: "春節" }, { date: "2026-02-19", name: "春節" },
-            { date: "2026-02-20", name: "春節" }, { date: "2026-02-21", name: "春節" }, { date: "2026-02-22", name: "春節" },
-            { date: "2026-02-27", name: "和平紀念日" }, { date: "2026-02-28", name: "和平紀念日" }, { date: "2026-03-01", name: "和平紀念日" },
-            { date: "2026-04-03", name: "清明節" }, { date: "2026-04-04", name: "清明節" }, { date: "2026-04-05", name: "清明節" }, { date: "2026-04-06", name: "清明節" },
-            { date: "2026-05-01", name: "勞動節" }, { date: "2026-05-02", name: "勞動節" }, { date: "2026-05-03", name: "勞動節" },
-            { date: "2026-06-19", name: "端午節" }, { date: "2026-06-20", name: "端午節" }, { date: "2026-06-21", name: "端午節" },
-            { date: "2026-09-25", name: "中秋/教師節" }, { date: "2026-09-26", name: "中秋/教師節" }, { date: "2026-09-27", name: "中秋/教師節" }, { date: "2026-09-28", name: "中秋/教師節" },
-            { date: "2026-10-09", name: "國慶日" }, { date: "2026-10-10", name: "國慶日" }, { date: "2026-10-11", name: "國慶日" },
-            { date: "2026-10-24", name: "光復節" }, { date: "2026-10-25", name: "光復節" }, { date: "2026-10-26", name: "光復節" },
-            { date: "2026-12-25", name: "行憲紀念日" }, { date: "2026-12-26", name: "行憲紀念日" }, { date: "2026-12-27", name: "行憲紀念日" }
-        ];
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
+        const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";
 
-        let currentDisplayDate = new Date();
-        const SUGGEST_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=1793548004&single=true&output=csv';
-        const GOOGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
+        const LEVEL1_MANAGER_IDS = ["E020"];
+        const LEVEL2_MANAGER_IDS = ["E001", "E002"];
 
-        // 請假系統 GAS API 網址
-        const NEW_GAS_API_URL = 'https://script.google.com/macros/s/AKfycby5eWga0igixQ-bkyFwx1f1-t455YhWClHs7NKOL4YUkyD-bZjdQE8YYwT5eafa3ELY-w/exec';
-
-        // 出差系統 GAS API 網址
-        const TRIP_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec';
-
-        // WhatsApp 主管電話設定（可填入國碼+號碼，例如 "886912345678"；留空則開啟一般分享連結）
-        const TRIP_MANAGER_PHONES = {
+        const MANAGER_PHONES = {
             "ERIC": "",
             "李彥綸": "",
             "楊添仰": ""
         };
 
-        const CUT_OFF_DATE = new Date('2026-11-06T00:00:00');
+        const EMPLOYEE_LIST = [
+            { id: "E001", name: "李彥綸" },
+            { id: "E002", name: "楊添仰" },
+            { id: "E003", name: "陳品鈞" },
+            { id: "E005", name: "陳秀燕" },
+            { id: "E006", name: "高欣宜" },
+            { id: "E011", name: "余品橋" },
+            { id: "E012", name: "陳慧真" },
+            { id: "E020", name: "ERIC" },
+            { id: "E023", name: "陳靖昂" },
+            { id: "E026", name: "何成偉" },
+            { id: "E029", name: "李佩娟" },
+            { id: "E033", name: "曾晨杰" },
+            { id: "E035", name: "戴政宏" },
+            { id: "E036", name: "詹淑敏" }
+        ];
 
-        const nameList = ["全部人員", "金牛頓", "ERIC", "何成偉", "方順黌", "王冠峯", "余品橋", "李佩娟", "高欣宜", "陳秀燕", "陳品鈞", "陳靖昂", "陳慧真", "曾晨杰", "楊添仰", "詹淑敏", "戴政宏", "蘇威丞"];
+        let currentUser = { id: "", name: "" };
+        let calculatedDays = 0;
 
-        let leaveRecords = [];
-        let suggestions = [];
-
-        function normalizeDateStr(val) {
-            if (!val) return '';
-            const str = String(val).trim().split('T')[0].replace(/\//g, '-');
-            const parts = str.split('-');
-            if (parts.length === 3 && parts[0].length === 4) {
-                return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-            }
-            const dt = new Date(val);
-            if (!isNaN(dt.getTime())) {
-                return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-            }
-            return str;
+        function clearAuthStorage() {
+            localStorage.removeItem('king_newton_auth');
+            localStorage.removeItem('king_newton_emp_id');
+            localStorage.removeItem('king_newton_emp_name');
         }
 
-        function isApprovedStatus(statusVal) {
-            const st = String(statusVal || '').trim();
-            return st === '已核准' || (st.includes('核准') && !st.includes('待') && !st.includes('未') && !st.includes('駁回'));
+        function showLoginModal() {
+            currentUser = { id: "", name: "" };
+            document.getElementById('user-display').innerText = "尚未登入";
+            document.getElementById('user-display-mobile').innerText = "尚未登入";
+            document.getElementById('auth-modal').style.display = 'flex';
         }
 
-        // ==========================================
-        // 出差單送簽 WhatsApp 通知處理函式（比照 leave.html 格式）
-        // ==========================================
+        function applyUserSession(empId, empName) {
+            currentUser = { id: empId, name: empName };
+            const label = `${empId} ${empName}`;
+            document.getElementById('user-display').innerText = label;
+            document.getElementById('user-display-mobile').innerText = label;
+            document.getElementById('auth-modal').style.display = 'none';
+            refreshProxyOptions();
+        }
 
-        // 1. 員工送出出差單後 -> 通知一階主管 ERIC
-        function handleTripSubmitSuccess(empName, routeLocation, startDate, endDate, days, reason) {
-            alert("🎉 出差單已成功送出！");
+        function refreshProxyOptions() {
+            const p1 = document.getElementById('proxy1');
+            const p2 = document.getElementById('proxy2');
+            const prev1 = p1.value;
+            const prev2 = p2.value;
 
-            const waText = encodeURIComponent(
-                `【出差審核通知】
-` +
-                `同仁：${empName}
-` +
-                `地點/行程：${routeLocation}
-` +
-                `期間：${startDate} 至 ${endDate}（${days} 天）
-` +
-                `事由：${reason}
-` +
-                `請至金牛頓系統進行一階簽核。`
+            p1.innerHTML = '<option value="">請選擇同仁</option>';
+            p2.innerHTML = '<option value="">無</option>';
+
+            EMPLOYEE_LIST.forEach(emp => {
+                if (emp.name.toUpperCase() !== currentUser.name.toUpperCase() && emp.id.toUpperCase() !== currentUser.id.toUpperCase()) {
+                    p1.add(new Option(`${emp.name} (${emp.id})`, emp.name));
+                    p2.add(new Option(`${emp.name} (${emp.id})`, emp.name));
+                }
+            });
+
+            if (prev1 && [...p1.options].some(o => o.value === prev1)) p1.value = prev1;
+            if (prev2 && [...p2.options].some(o => o.value === prev2)) p2.value = prev2;
+        }
+
+        function verifyEmp(e) {
+            e.preventDefault();
+            const inputId = document.getElementById('emp-id-input').value.trim().toUpperCase();
+            const inputName = document.getElementById('emp-name-input').value.trim().toUpperCase();
+            const msgDiv = document.getElementById('auth-msg');
+
+            const matchedEmp = EMPLOYEE_LIST.find(emp =>
+                emp.id.toUpperCase() === inputId && emp.name.toUpperCase() === inputName
             );
 
-            const ericPhone = TRIP_MANAGER_PHONES["ERIC"] || "";
-            if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
-                const waUrl = ericPhone 
-                    ? `https://wa.me/${ericPhone}?text=${waText}` 
-                    : `https://api.whatsapp.com/send?text=${waText}`;
-                window.open(waUrl, '_blank');
+            if (matchedEmp) {
+                localStorage.setItem('king_newton_auth', 'true');
+                localStorage.setItem('king_newton_emp_id', matchedEmp.id);
+                localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+                msgDiv.innerText = "";
+                applyUserSession(matchedEmp.id, matchedEmp.name);
+            } else {
+                msgDiv.innerText = "❌ 工號與姓名不符，請重新輸入！";
             }
         }
 
-        // 2. 一階主管核准出差單後 -> 選擇通知二階主管（李彥綸 / 楊添仰）
-        function handleTripApproveStep1Success(managerName, applicantName, routeLocation, days, tripId) {
-            const targetManager = prompt(
-                "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
-請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)", 
-                "1"
-            );
-            
-            let nextManagerName = "";
-            if (targetManager === "1") nextManagerName = "李彥綸";
-            else if (targetManager === "2") nextManagerName = "楊添仰";
+        function logoutSystem() {
+            if (confirm("確定要登出系統嗎？")) {
+                clearAuthStorage();
+                window.location.href = "index.html";
+            }
+        }
 
-            if (nextManagerName) {
+        let pressTimer = null;
+        const logoutTrigger = document.getElementById('logout-trigger');
+        logoutTrigger.addEventListener('mousedown', () => { pressTimer = setTimeout(logoutSystem, 2000); });
+        logoutTrigger.addEventListener('touchstart', () => { pressTimer = setTimeout(logoutSystem, 2000); });
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            logoutTrigger.addEventListener(evt, () => clearTimeout(pressTimer));
+        });
+
+        function initPage() {
+            if (window.location.hash === '#reset') {
+                clearAuthStorage();
+                showLoginModal();
+                return;
+            }
+            try {
+                const isAuth = localStorage.getItem('king_newton_auth');
+                const empId = (localStorage.getItem('king_newton_emp_id') || '').trim();
+                const empName = (localStorage.getItem('king_newton_emp_name') || '').trim();
+
+                if (isAuth === 'true' && empId && empName) {
+                    applyUserSession(empId, empName);
+                } else {
+                    clearAuthStorage();
+                    showLoginModal();
+                }
+            } catch (err) {
+                showLoginModal();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPage);
+        } else {
+            initPage();
+        }
+
+        function calcDays() {
+            const startVal = document.getElementById('startDate').value;
+            const endVal = document.getElementById('endDate').value;
+            if (!startVal || !endVal) {
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "共計：0 天";
+                return;
+            }
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            if (end >= start) {
+                const diffTime = Math.abs(end - start);
+                calculatedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('dayCountText').innerText = `共計：${calculatedDays} 天`;
+                document.getElementById('proxy2').required = (calculatedDays > 3);
+            } else {
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "結束日期不可早於開始日期";
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-apply').classList.toggle('active', tab === 'apply');
+            document.getElementById('tab-review').classList.toggle('active', tab === 'review');
+            document.getElementById('sec-apply').classList.toggle('hidden', tab !== 'apply');
+            document.getElementById('sec-review').classList.toggle('hidden', tab !== 'review');
+
+            if (tab === 'review') {
+                loadTripRecords();
+            }
+        }
+
+        function submitTrip(e) {
+            e.preventDefault();
+            if (!currentUser.id || !currentUser.name) {
+                showLoginModal();
+                return;
+            }
+            if (calculatedDays <= 0) {
+                alert("請確認開始與結束日期是否正確！");
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "提交中...";
+
+            const empName = currentUser.name;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const days = calculatedDays;
+            const route = document.getElementById('route').value.trim();
+            const reason = document.getElementById('reason').value.trim();
+
+            const payload = {
+                action: "createTrip",
+                empId: currentUser.id,
+                empName: empName,
+                factory: document.querySelector('input[name="factory"]:checked').value,
+                startDate: startDate,
+                endDate: endDate,
+                days: days,
+                route: route,
+                reason: reason,
+                transport: document.getElementById('transport').value,
+                expense: document.getElementById('expense').value.trim() || "無",
+                proxy1: document.getElementById('proxy1').value,
+                proxy2: document.getElementById('proxy2').value || "無",
+                status: "待一階簽核"
+            };
+
+            fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert("🎉 出差單已成功送出！");
+
                 const waText = encodeURIComponent(
-                    `【出差二階簽核通知】
-` +
-                    `一階主管 ${managerName} 已核准。
-` +
-                    `申請同仁：${applicantName}
-` +
-                    `地點/行程：${routeLocation} (${days}天)
-` +
-                    `單號：${tripId}
-` +
-                    `請 ${nextManagerName} 主管至系統進行二階最終核准。`
+                    `【出差審核通知】\n` +
+                    `同仁：${empName}\n` +
+                    `地點/行程：${route}\n` +
+                    `期間：${startDate} 至 ${endDate}（${days} 天）\n` +
+                    `事由：${reason}\n` +
+                    `請至金牛頓系統進行一階簽核。`
                 );
 
-                const nextPhone = TRIP_MANAGER_PHONES[nextManagerName] || "";
-                const waUrl = nextPhone 
-                    ? `https://wa.me/${nextPhone}?text=${waText}` 
-                    : `https://api.whatsapp.com/send?text=${waText}`;
-                window.open(waUrl, '_blank');
-            }
-        }
-
-        async function fetchData() {
-            try {
-                // 1. 抓取 2026/11/05 以前的舊請假資料
-                const resL = await fetch(GOOGLE_CSV_URL);
-                const dataL = await resL.text();
-                const rowsL = dataL.split('
-').slice(1);
-                let oldRecords = rowsL.filter(r => r.trim() !== '').map((row, index) => {
-                    const cols = row.split(',');
-                    let durStr = cols[4] || "整天";
-                    let rate = 1;
-                    if (durStr.includes("半天")) rate = 0.5;
-                    else if (durStr.includes("小時")) rate = parseFloat(durStr) / 8;
-                    return {
-                        id: 'old_' + index,
-                        name: (cols[0] || '').trim(),
-                        type: (cols[1] || '請假').trim(),
-                        start: normalizeDateStr(cols[2]),
-                        end: normalizeDateStr(cols[3]) || normalizeDateStr(cols[2]),
-                        displayDuration: durStr,
-                        rate: rate,
-                        note: (cols[5] || '').trim()
-                    };
-                }).filter(r => r.start);
-
-                oldRecords = oldRecords.filter(r => new Date(r.start + 'T00:00:00') < CUT_OFF_DATE);
-
-                // 2. 抓取 2026/11/06 起的新請假紀錄 (已核准)
-                let newRecords = [];
-                try {
-                    const resNew = await fetch(`${NEW_GAS_API_URL}?action=getAllLeavesForCalendar&t=${new Date().getTime()}`);
-                    const jsonNew = await resNew.json();
-                    if (jsonNew.status === 'success' && Array.isArray(jsonNew.data)) {
-                        newRecords = jsonNew.data
-                            .filter(row => {
-                                const startStr = normalizeDateStr(row.startTime);
-                                if (!startStr) return false;
-                                const leaveStart = new Date(startStr + 'T00:00:00');
-                                const isApproved = isApprovedStatus(row.status) || isApprovedStatus(row.step2Status);
-                                return leaveStart >= CUT_OFF_DATE && isApproved;
-                            })
-                            .map(row => {
-                                const startDate = normalizeDateStr(row.startTime);
-                                const endDate = normalizeDateStr(row.endTime) || startDate;
-                                return {
-                                    id: row.id,
-                                    name: String(row.name || '').trim(),
-                                    type: String(row.type || '請假').trim(),
-                                    start: startDate,
-                                    end: endDate,
-                                    displayDuration: (row.days || 1) + "天",
-                                    rate: 1,
-                                    note: String(row.reason || '').trim()
-                                };
-                            });
-                    }
-                } catch (err) {
-                    console.error("載入新請假系統資料失敗", err);
+                const ericPhone = MANAGER_PHONES["ERIC"] || "";
+                if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
+                    const waUrl = ericPhone 
+                        ? `https://wa.me/${ericPhone}?text=${waText}` 
+                        : `https://api.whatsapp.com/send?text=${waText}`;
+                    window.open(waUrl, '_blank');
                 }
 
-                // 3. 抓取【出差單】紀錄 (僅抓取：已核准)
-                let tripRecords = [];
-                try {
-                    const resTrip = await fetch(`${TRIP_GAS_API_URL}?action=getBusinessTrips&t=${new Date().getTime()}`);
-                    const jsonTrip = await resTrip.json();
-                    if (jsonTrip.status === 'success' && Array.isArray(jsonTrip.data)) {
-                        tripRecords = jsonTrip.data
-                            .filter(row => isApprovedStatus(row.status))
-                            .map(row => {
-                                const startDate = normalizeDateStr(row.startDate || row.startTime || '');
-                                const endDate = normalizeDateStr(row.endDate || row.endTime || '') || startDate;
-                                const location = String(row.route || row.reason || '').trim();
-                                return {
-                                    id: row.id || ('trip_' + Math.random()),
-                                    name: String(row.empName || row.name || '').trim(),
-                                    type: '出差',
-                                    start: startDate,
-                                    end: endDate,
-                                    displayDuration: (row.days || 1) + "天",
-                                    rate: 1,
-                                    note: `出差: ${location}`
-                                };
-                            })
-                            .filter(r => r.start && r.end);
+                document.getElementById('tripForm').reset();
+                calculatedDays = 0;
+                document.getElementById('dayCountText').innerText = "共計：0 天";
+                refreshProxyOptions();
+                btn.disabled = false;
+                btn.innerText = "送出出差申請";
+                switchTab('review');
+                setTimeout(loadTripRecords, 1500);
+            }).catch(err => {
+                alert("送出失敗：" + err);
+                btn.disabled = false;
+                btn.innerText = "送出出差申請";
+            });
+        }
+
+        function handleReview(empId, applicantName, route, days, startDate, stage, decision) {
+            const actionLabel = decision === 'approve' ? '核准' : '駁回';
+            const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
+            if (note === null) return;
+
+            let nextStatus = "待一階簽核";
+            if (decision === 'reject') {
+                nextStatus = "已駁回";
+            } else if (stage === 1) {
+                nextStatus = "待二階簽核";
+            } else if (stage === 2) {
+                nextStatus = "已核准";
+            }
+
+            const payload = {
+                action: "reviewTrip",
+                empId: empId,
+                startDate: startDate,
+                stage: stage,
+                decision: decision,
+                newStatus: nextStatus,
+                reviewerNote: `[${stage}階 ${currentUser.name} - ${actionLabel}] ${note}`
+            };
+
+            fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert(`✅ 第${stage}階簽核完成，目前狀態：${nextStatus}`);
+
+                if (stage === 1 && decision === 'approve') {
+                    const targetManager = prompt(
+                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)",
+                        "1"
+                    );
+
+                    let nextManagerName = "";
+                    if (targetManager === "1") nextManagerName = "李彥綸";
+                    else if (targetManager === "2") nextManagerName = "楊添仰";
+
+                    if (nextManagerName) {
+                        const waText = encodeURIComponent(
+                            `【出差二階簽核通知】\n` +
+                            `一階主管 ${currentUser.name} 已核准。\n` +
+                            `申請同仁：${applicantName}\n` +
+                            `地點/行程：${route} (${days}天)\n` +
+                            `請 ${nextManagerName} 主管至系統進行二階最終核准。`
+                        );
+
+                        const nextPhone = MANAGER_PHONES[nextManagerName] || "";
+                        const waUrl = nextPhone 
+                            ? `https://wa.me/${nextPhone}?text=${waText}` 
+                            : `https://api.whatsapp.com/send?text=${waText}`;
+                        window.open(waUrl, '_blank');
                     }
-                } catch (err) {
-                    console.error("載入出差單紀錄失敗", err);
                 }
 
-                // 4. 合併舊請假、新請假、出差紀錄
-                leaveRecords = [...oldRecords, ...newRecords, ...tripRecords];
-
-                // 5. 抓取建議事項
-                const resS = await fetch(SUGGEST_CSV_URL);
-                const dataS = await resS.text();
-                const rowsS = dataS.split('
-').slice(1);
-                suggestions = rowsS.filter(r => r.trim() !== '').map(row => {
-                    const cols = row.split(',');
-                    return { title: cols[0], content: cols[1] };
-                });
-
-                renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-                renderSuggestions();
-            } catch (e) {
-                console.error("資料讀取失敗", e);
-            }
-        }
-
-        function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
-        function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
-
-        function toggleAllWeekend() {
-            const el = document.getElementById('calendarContainer');
-            if (el.classList.contains('hide-sun') || el.classList.contains('hide-sat')) {
-                el.classList.remove('hide-sun', 'hide-sat');
-            } else {
-                el.classList.add('hide-sun', 'hide-sat');
-            }
-        }
-
-        function calculateDays(r) {
-            const d1 = new Date(r.start + 'T00:00:00');
-            const d2 = new Date(r.end + 'T00:00:00');
-            const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-            return diffDays * r.rate;
-        }
-
-        function queryRecords() {
-            const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-            if (!s || !e) return alert("請選日期範圍後再執行查詢");
-            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e) || (r.start <= s && r.end >= e)) && (qName === "全部人員" || r.name === qName));
-            res.sort((a, b) => a.start < b.start ? -1 : 1);
-            let stats = {};
-            let h = `<table><thead><tr><th>姓名</th><th>類別/事由</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/地點</th></tr></thead><tbody>`;
-            res.forEach(r => {
-                const totalDays = calculateDays(r);
-                stats[r.type] = (stats[r.type] || 0) + totalDays;
-                h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${totalDays}天</td><td style="text-align:left;">${r.note}</td></tr>`;
+                setTimeout(loadTripRecords, 1500);
             });
-            if (res.length > 0) {
-                let stText = Object.keys(stats).map(k => `${k}: ${stats[k]}天`).join(' | ');
-                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${stText}</td></tr>`;
-            } else { h += `<tr><td colspan="6">此範圍內查無資料</td></tr>`; }
-            document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
         }
 
-        function exportToExcel() {
-            const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-            if (!s || !e) return alert("請先選取日期範圍並執行查詢後再匯出");
-            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e) || (r.start <= s && r.end >= e)) && (qName === "全部人員" || r.name === qName));
-            if (res.length === 0) return alert("目前查詢範圍內無資料可匯出");
-            let csvContent = "﻿姓名,類別,開始日期,結束日期,時數/天數,說明/地點
-";
-            res.forEach(r => {
-                csvContent += `${r.name},${r.type},${r.start},${r.end},${calculateDays(r)}天,${String(r.note || '').replace(/,/g, "，")}
-`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `金牛頓查詢紀錄_${s}_至_${e}.csv`;
-            link.click();
-        }
-
-        function renderCalendar(year, month) {
-            const tbody = document.getElementById('calendarBody');
-            const mobileCardsEl = document.getElementById('mobileCards');
-            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
-            const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-            let html = '';
-            let cardsHtml = '';
-
-            const firstDay = new Date(year, month - 1, 1).getDay();
-            const lastDate = new Date(year, month, 0).getDate();
-            const weekDays = ['日','一','二','三','四','五','六'];
-            let date = 1;
-
-            for (let i = 0; i < 6; i++) {
-                let row = '<tr>';
-                for (let j = 0; j < 7; j++) {
-                    if ((i === 0 && j < firstDay) || date > lastDate) {
-                        row += '<td style="background:#f9f9f9;"></td>';
+        function parseCSVRow(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
                     } else {
-                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                        const isToday = (ds === todayStr);
-                        const records = leaveRecords.filter(r => ds >= r.start && ds <= r.end);
-                        const dayHolidays = holidayList.filter(h => h.date === ds);
-                        const allRecords = [...records, ...dayHolidays.map(h => ({ name: "國定假日", note: h.name, type: '假期' }))];
-
-                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}">
-                            <div style="font-weight:bold;text-align:center;">${date}</div>
-                            ${allRecords.map(r => {
-                                let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '出差' ? 'trip-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record')));
-                                return `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
-                            }).join('')}
-                        </td>`;
-
-                        cardsHtml += `<div class="card">
-                            <div class="card-date">
-                                <span>${month}月${date}日</span>
-                                <span class="${(j===0||j===6)?'card-weekend':''}">(週${weekDays[j]})</span>
-                            </div>
-                            ${allRecords.length > 0 ? allRecords.map(r => {
-                                let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '出差' ? 'trip-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record')));
-                                return `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
-                            }).join('') : '<div style="color:#ccc; font-size:0.8em;">暫無活動</div>'}
-                        </div>`;
-                        date++;
+                        inQuotes = !inQuotes;
                     }
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += ch;
                 }
-                html += row + '</tr>';
-                if (date > lastDate) break;
             }
-            tbody.innerHTML = html;
-            mobileCardsEl.innerHTML = cardsHtml;
+            result.push(current.trim());
+            return result;
         }
 
-        function renderSuggestions() {
-            document.getElementById('suggestionList').innerHTML = suggestions.map(s => {
-                return `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`;
-            }).join('');
+        function loadTripRecords() {
+            const listDiv = document.getElementById('recordList');
+            listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">資料讀取中...</div>';
+
+            const sep = CSV_DATA_URL.includes('?') ? '&' : '?';
+            fetch(`${CSV_DATA_URL}${sep}t=${new Date().getTime()}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.text();
+                })
+                .then(csvText => {
+                    const cleanText = csvText.replace(/\r/g, '').trim();
+                    if (!cleanText || cleanText.startsWith('<!DOCTYPE') || cleanText.startsWith('<html')) {
+                        listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
+                        return;
+                    }
+
+                    const lines = cleanText.split('\n').filter(l => l.trim() !== '');
+                    if (lines.length <= 1) {
+                        listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
+                        return;
+                    }
+
+                    const isLevel1 = LEVEL1_MANAGER_IDS.includes(currentUser.id);
+                    const isLevel2 = LEVEL2_MANAGER_IDS.includes(currentUser.id);
+                    const dataRows = lines.slice(1).map(parseCSVRow).filter(r => r.some(c => c !== '')).reverse();
+
+                    listDiv.innerHTML = dataRows.map(col => {
+                        const empId = col[1] || '';
+                        const empName = col[2] || '';
+                        const factory = col[3] || '';
+                        const startDate = col[4] || '';
+                        const endDate = col[5] || '';
+                        const days = col[6] || '';
+                        const route = col[7] || '';
+                        const reason = col[8] || '';
+                        const transport = col[9] || '';
+                        const expense = col[10] || '無';
+                        const proxy1 = col[11] || '';
+                        const proxy2 = col[12] || '無';
+                        const status = col[13] || '待一階簽核';
+                        const note = col[14] || '';
+
+                        let badgeClass = 'bg-amber-100 text-amber-700';
+                        if (status.includes('核准')) badgeClass = 'bg-emerald-100 text-emerald-700';
+                        else if (status.includes('駁回')) badgeClass = 'bg-rose-100 text-rose-700';
+                        else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
+
+                        const safeEmpName = empName.replace(/'/g, "\\'");
+                        const safeRoute = route.replace(/'/g, "\\'");
+
+                        let actionButtonsHtml = '';
+                        if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
+                            actionButtonsHtml = `
+                                <div class="flex gap-2 pt-2 border-t">
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
+                                </div>
+                            `;
+                        } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
+                            actionButtonsHtml = `
+                                <div class="flex gap-2 pt-2 border-t">
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-2 shadow-sm">
+                                <div class="flex justify-between items-center border-b pb-1.5">
+                                    <span class="font-bold text-slate-800 text-sm">${empName} (${factory}廠)</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${status}</span>
+                                </div>
+                                <div class="text-slate-600"><strong>期間：</strong>${startDate} ~ ${endDate} (${days}天)</div>
+                                <div class="text-slate-600"><strong>行程：</strong>${route} (${transport})</div>
+                                <div class="text-slate-600"><strong>事由：</strong>${reason}</div>
+                                <div class="text-slate-600"><strong>費用/預支：</strong>${expense}</div>
+                                <div class="text-slate-500 text-[11px]"><strong>代理人：</strong>${proxy1} ${proxy2 && proxy2 !== '無' ? '/ ' + proxy2 : ''}</div>
+                                ${note ? `<div class="text-slate-600 text-[11px] bg-slate-100 p-1.5 rounded"><strong>簽核備註：</strong>${note}</div>` : ''}
+                                ${actionButtonsHtml}
+                            </div>
+                        `;
+                    }).join('');
+                })
+                .catch(() => {
+                    listDiv.innerHTML = '<div class="text-center text-rose-500 py-4">讀取 CSV 資料失敗，請確認 Google Sheet 發布與權限。</div>';
+                });
         }
-
-        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
-
-        function saveFullHTML() {
-            const queryArea = document.getElementById('queryResultArea');
-            const originalContent = queryArea.innerHTML;
-            queryArea.innerHTML = "";
-            const blob = new Blob(['<!DOCTYPE html>
-' + document.documentElement.outerHTML], { type: 'text/html' });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = `金牛頓行事曆_${new Date().toISOString().split('T')[0]}.html`;
-            a.click();
-            queryArea.innerHTML = originalContent;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const qSel = document.getElementById('queryNameSelect');
-            nameList.forEach(n => qSel.add(new Option(n, n)));
-            fetchData();
-        });
     </script>
 </body>
 </html>
