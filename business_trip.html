@@ -66,6 +66,20 @@
         </div>
     </header>
 
+        <div id="code-helper-bar" class="max-w-xl mx-auto px-4 pt-3">
+        <div class="bg-slate-800 text-white rounded-2xl px-4 py-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span class="font-semibold text-emerald-300"><i class="fa-solid fa-code mr-1"></i>出差單原始碼工具</span>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="copyFullHtmlSource()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer transition">
+                    <i class="fa-regular fa-copy mr-1"></i>複製完整 HTML
+                </button>
+                <button type="button" onclick="downloadHtmlFile()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer transition">
+                    <i class="fa-solid fa-download mr-1"></i>下載 .html 檔
+                </button>
+            </div>
+        </div>
+    </div>
+
     <main class="max-w-xl mx-auto p-4 space-y-4">
 
         <div class="md:hidden flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
@@ -687,6 +701,51 @@
             document.addEventListener('DOMContentLoaded', initPage);
         } else {
             initPage();
+        }
+
+        function getCleanSourceHtml() {
+            const bar = document.getElementById('code-helper-bar');
+            const prevDisplay = bar ? bar.style.display : '';
+            if (bar) bar.style.display = 'none';
+            const htmlText = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            if (bar) bar.style.display = prevDisplay;
+            return htmlText;
+        }
+
+        function copyFullHtmlSource() {
+            const htmlText = getCleanSourceHtml();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(htmlText).then(() => {
+                    alert('✅ 已複製完整 HTML 原始碼，可直接貼上使用！');
+                }).catch(() => {
+                    fallbackCopyText(htmlText);
+                });
+            } else {
+                fallbackCopyText(htmlText);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            alert('✅ 已複製完整 HTML 原始碼，可直接貼上使用！');
+        }
+
+        function downloadHtmlFile() {
+            const htmlText = getCleanSourceHtml();
+            const blob = new Blob([htmlText], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'business_trip.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         function calcDays() {
