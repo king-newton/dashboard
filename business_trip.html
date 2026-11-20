@@ -37,7 +37,7 @@
             </div>
             <form onsubmit="verifyEmp(event)" class="space-y-3">
                 <div>
-                    <input type="text" id="emp-id-input" placeholder="請輸入工號 (例: E001)" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
+                    <input type="text" id="emp-id-input" placeholder="請輸入工號 (例: E020)" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
                 </div>
                 <div>
                     <input type="text" id="emp-name-input" placeholder="請輸入姓名" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
@@ -139,43 +139,15 @@
 
                 <div class="grid grid-cols-2 gap-3 pt-1">
                     <div>
-                        <label class="block font-bold text-slate-700 mb-1">第一職務代理人</label>
-                        <select id="proxy1" required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
-                            <option value="">請選擇同仁</option>
-                            <option value="李彥綸">李彥綸 (E001)</option>
-                            <option value="楊添仰">楊添仰 (E002)</option>
-                            <option value="陳品鈞">陳品鈞 (E003)</option>
-                            <option value="陳秀燕">陳秀燕 (E005)</option>
-                            <option value="高欣宜">高欣宜 (E006)</option>
-                            <option value="余品橋">余品橋 (E011)</option>
-                            <option value="陳慧真">陳慧真 (E012)</option>
-                            <option value="ERIC">ERIC (E020)</option>
-                            <option value="陳靖昂">陳靖昂 (E023)</option>
-                            <option value="何成偉">何成偉 (E026)</option>
-                            <option value="李佩娟">李佩娟 (E029)</option>
-                            <option value="曾晨杰">曾晨杰 (E033)</option>
-                            <option value="戴政宏">戴政宏 (E035)</option>
-                            <option value="詹淑敏">詹淑敏 (E036)</option>
+                        <label class="block font-bold text-slate-700 mb-1">第一職務代理人 (選填)</label>
+                        <select id="proxy1" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
+                            <option value="">無</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 mb-1">第二職務代理人 (超過3天)</label>
+                        <label class="block font-bold text-slate-700 mb-1">第二職務代理人 (選填)</label>
                         <select id="proxy2" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
                             <option value="">無</option>
-                            <option value="李彥綸">李彥綸 (E001)</option>
-                            <option value="楊添仰">楊添仰 (E002)</option>
-                            <option value="陳品鈞">陳品鈞 (E003)</option>
-                            <option value="陳秀燕">陳秀燕 (E005)</option>
-                            <option value="高欣宜">高欣宜 (E006)</option>
-                            <option value="余品橋">余品橋 (E011)</option>
-                            <option value="陳慧真">陳慧真 (E012)</option>
-                            <option value="ERIC">ERIC (E020)</option>
-                            <option value="陳靖昂">陳靖昂 (E023)</option>
-                            <option value="何成偉">何成偉 (E026)</option>
-                            <option value="李佩娟">李佩娟 (E029)</option>
-                            <option value="曾晨杰">曾晨杰 (E033)</option>
-                            <option value="戴政宏">戴政宏 (E035)</option>
-                            <option value="詹淑敏">詹淑敏 (E036)</option>
                         </select>
                     </div>
                 </div>
@@ -201,16 +173,25 @@
 
     <script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
-        const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";
 
+        // 一階簽核人：ERIC (E020)
         const LEVEL1_MANAGER_IDS = ["E020"];
-        const LEVEL2_MANAGER_IDS = ["E001", "E002"];
 
-        const MANAGER_PHONES = {
-            "ERIC": "",
-            "李彥綸": "",
-            "楊添仰": ""
-        };
+        // 二階簽核人：北、中為李彥綸 (E001)；南為楊添仰 (E002)；ERIC (E020) 為管理員可代簽二階
+        function canApproveLevel2(empId, factory) {
+            const id = String(empId || "").trim().toUpperCase();
+            if (id === "E020") return true;
+
+            const fac = String(factory || "").trim();
+            if (fac === "台南" || fac === "南") {
+                return id === "E002";
+            }
+            return id === "E001";
+        }
+
+        function canApproveLevel1(empId) {
+            return LEVEL1_MANAGER_IDS.includes(String(empId || "").trim().toUpperCase());
+        }
 
         const EMPLOYEE_LIST = [
             { id: "E001", name: "李彥綸" },
@@ -260,7 +241,7 @@
             const prev1 = p1.value;
             const prev2 = p2.value;
 
-            p1.innerHTML = '<option value="">請選擇同仁</option>';
+            p1.innerHTML = '<option value="">無</option>';
             p2.innerHTML = '<option value="">無</option>';
 
             EMPLOYEE_LIST.forEach(emp => {
@@ -352,7 +333,6 @@
                 const diffTime = Math.abs(end - start);
                 calculatedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                 document.getElementById('dayCountText').innerText = `共計：${calculatedDays} 天`;
-                document.getElementById('proxy2').required = (calculatedDays > 3);
             } else {
                 calculatedDays = 0;
                 document.getElementById('dayCountText').innerText = "結束日期不可早於開始日期";
@@ -367,6 +347,33 @@
 
             if (tab === 'review') {
                 loadTripRecords();
+            }
+        }
+
+        function buildWhatsAppSummary(payload) {
+            const proxies = [payload.proxy1, payload.proxy2].filter(p => p && p !== "無");
+            const proxyText = proxies.length > 0 ? proxies.join(" / ") : "無";
+
+            return [
+                "【金牛頓工業｜出差申請通知】",
+                `申請人：${payload.empName} (${payload.empId})`,
+                `廠區：${payload.factory}廠`,
+                `期間：${payload.startDate} ~ ${payload.endDate} (共 ${payload.days} 天)`,
+                `行程：${payload.route}`,
+                `事由：${payload.reason}`,
+                `交通：${payload.transport}`,
+                `費用/預支：${payload.expense}`,
+                `代理人：${proxyText}`,
+                `狀態：${payload.status}`
+            ].join("\n");
+        }
+
+        function promptSendWhatsApp(payload) {
+            const wantSend = confirm("出差單已送出！請問是否要將出差資訊傳送到 WhatsApp？");
+            if (wantSend) {
+                const message = buildWhatsAppSummary(payload);
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(waUrl, "_blank", "noopener,noreferrer");
             }
         }
 
@@ -385,26 +392,19 @@
             btn.disabled = true;
             btn.innerText = "提交中...";
 
-            const empName = currentUser.name;
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const days = calculatedDays;
-            const route = document.getElementById('route').value.trim();
-            const reason = document.getElementById('reason').value.trim();
-
             const payload = {
                 action: "createTrip",
                 empId: currentUser.id,
-                empName: empName,
+                empName: currentUser.name,
                 factory: document.querySelector('input[name="factory"]:checked').value,
-                startDate: startDate,
-                endDate: endDate,
-                days: days,
-                route: route,
-                reason: reason,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                days: calculatedDays,
+                route: document.getElementById('route').value.trim(),
+                reason: document.getElementById('reason').value.trim(),
                 transport: document.getElementById('transport').value,
                 expense: document.getElementById('expense').value.trim() || "無",
-                proxy1: document.getElementById('proxy1').value,
+                proxy1: document.getElementById('proxy1').value || "無",
                 proxy2: document.getElementById('proxy2').value || "無",
                 status: "待一階簽核"
             };
@@ -415,25 +415,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                alert("🎉 出差單已成功送出！");
-
-                const waText = encodeURIComponent(
-                    `【出差審核通知】\n` +
-                    `同仁：${empName}\n` +
-                    `地點/行程：${route}\n` +
-                    `期間：${startDate} 至 ${endDate}（${days} 天）\n` +
-                    `事由：${reason}\n` +
-                    `請至金牛頓系統進行一階簽核。`
-                );
-
-                const ericPhone = MANAGER_PHONES["ERIC"] || "";
-                if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
-                    const waUrl = ericPhone
-                        ? `https://wa.me/${ericPhone}?text=${waText}`
-                        : `https://api.whatsapp.com/send?text=${waText}`;
-                    window.open(waUrl, '_blank');
-                }
-
+                promptSendWhatsApp(payload);
                 document.getElementById('tripForm').reset();
                 calculatedDays = 0;
                 document.getElementById('dayCountText').innerText = "共計：0 天";
@@ -449,7 +431,7 @@
             });
         }
 
-        function handleReview(empId, applicantName, route, days, startDate, stage, decision) {
+        function handleReview(tripId, empId, startDate, stage, decision) {
             const actionLabel = decision === 'approve' ? '核准' : '駁回';
             const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
             if (note === null) return;
@@ -465,6 +447,7 @@
 
             const payload = {
                 action: "reviewTrip",
+                tripId: tripId,
                 empId: empId,
                 startDate: startDate,
                 stage: stage,
@@ -479,142 +462,69 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                alert(`✅ 第${stage}階簽核完成，目前狀態：${nextStatus}`);
-
-                if (stage === 1 && decision === 'approve') {
-                    const targetManager = prompt(
-                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)",
-                        "1"
-                    );
-
-                    let nextManagerName = "";
-                    if (targetManager === "1") nextManagerName = "李彥綸";
-                    else if (targetManager === "2") nextManagerName = "楊添仰";
-
-                    if (nextManagerName) {
-                        const waText = encodeURIComponent(
-                            `【出差二階簽核通知】\n` +
-                            `一階主管 ${currentUser.name} 已核准。\n` +
-                            `申請同仁：${applicantName}\n` +
-                            `地點/行程：${route} (${days}天)\n` +
-                            `請 ${nextManagerName} 主管至系統進行二階最終核准。`
-                        );
-
-                        const nextPhone = MANAGER_PHONES[nextManagerName] || "";
-                        const waUrl = nextPhone
-                            ? `https://wa.me/${nextPhone}?text=${waText}`
-                            : `https://api.whatsapp.com/send?text=${waText}`;
-                        window.open(waUrl, '_blank');
-                    }
-                }
-
+                alert(`第${stage}階簽核完成，目前狀態：${nextStatus}`);
                 setTimeout(loadTripRecords, 1500);
             });
-        }
-
-        function parseCSVRow(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
-                if (ch === '"') {
-                    if (inQuotes && line[i + 1] === '"') {
-                        current += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (ch === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += ch;
-                }
-            }
-            result.push(current.trim());
-            return result;
         }
 
         function loadTripRecords() {
             const listDiv = document.getElementById('recordList');
             listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">資料讀取中...</div>';
 
-            const sep = CSV_DATA_URL.includes('?') ? '&' : '?';
-            fetch(`${CSV_DATA_URL}${sep}t=${new Date().getTime()}`)
+            const sep = GAS_WEB_APP_URL.includes('?') ? '&' : '?';
+            fetch(`${GAS_WEB_APP_URL}${sep}action=getBusinessTrips&t=${new Date().getTime()}`)
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
-                    return res.text();
+                    return res.json();
                 })
-                .then(csvText => {
-                    const cleanText = csvText.replace(/\r/g, '').trim();
-                    if (!cleanText || cleanText.startsWith('<!DOCTYPE') || cleanText.startsWith('<html')) {
+                .then(result => {
+                    if (!result || result.status !== 'success' || !Array.isArray(result.data) || result.data.length === 0) {
                         listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
                         return;
                     }
 
-                    const lines = cleanText.split('\n').filter(l => l.trim() !== '');
-                    if (lines.length <= 1) {
-                        listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
-                        return;
-                    }
+                    const isLevel1 = canApproveLevel1(currentUser.id);
+                    const dataRows = result.data.slice().reverse();
 
-                    const isLevel1 = LEVEL1_MANAGER_IDS.includes(currentUser.id);
-                    const isLevel2 = LEVEL2_MANAGER_IDS.includes(currentUser.id);
+                    listDiv.innerHTML = dataRows.map(item => {
+                        const tripId = item.id || '';
+                        const empId = item.empId || '';
+                        const empName = item.empName || '';
+                        const factory = item.factory || '';
+                        const startDate = item.startDate || '';
+                        const endDate = item.endDate || '';
+                        const days = item.days || '';
+                        const route = item.route || '';
+                        const reason = item.reason || '';
+                        const transport = item.transport || '';
+                        const expense = item.expense || '無';
+                        const proxy1 = item.proxy1 || '';
+                        const proxy2 = item.proxy2 || '無';
+                        const status = item.status || '待一階簽核';
+                        const note = item.note || '';
 
-                    const parsedRows = lines.slice(1).map(parseCSVRow).filter(r => r.some(c => c !== ''));
-                    if (parsedRows.length === 0) {
-                        listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
-                        return;
-                    }
-
-                    // 動態尋找關鍵欄位索引，避免欄位順序或前置欄位差異造成抓不到資料
-                    const findCol = (col, candidates, fallbackIdx) => {
-                        for (const idx of candidates) {
-                            if (idx >= 0 && idx < col.length && col[idx]) return col[idx];
-                        }
-                        return fallbackIdx >= 0 && fallbackIdx < col.length ? col[fallbackIdx] : '';
-                    };
-
-                    const dataRows = parsedRows.reverse();
-
-                    listDiv.innerHTML = dataRows.map(col => {
-                        const empId = findCol(col, [1, 0], 1);
-                        const empName = findCol(col, [2, 1], 2);
-                        const factory = findCol(col, [3, 2], 3);
-                        const startDate = findCol(col, [4, 3], 4);
-                        const endDate = findCol(col, [5, 4], 5);
-                        const days = findCol(col, [6, 5], 6);
-                        const route = findCol(col, [7, 6], 7);
-                        const reason = findCol(col, [8, 7], 8);
-                        const transport = findCol(col, [9, 8], 9);
-                        const expense = findCol(col, [10, 9], 10) || '無';
-                        const proxy1 = findCol(col, [11, 10], 11);
-                        const proxy2 = findCol(col, [12, 11], 12) || '無';
-                        const status = findCol(col, [13, 12], 13) || '待一階簽核';
-                        const note = findCol(col, [14, 13], 14);
+                        const isLevel2 = canApproveLevel2(currentUser.id, factory);
+                        const proxies = [proxy1, proxy2].filter(p => p && p !== '無');
+                        const proxyDisplay = proxies.length > 0 ? proxies.join(' / ') : '無';
 
                         let badgeClass = 'bg-amber-100 text-amber-700';
                         if (status.includes('核准')) badgeClass = 'bg-emerald-100 text-emerald-700';
                         else if (status.includes('駁回')) badgeClass = 'bg-rose-100 text-rose-700';
                         else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
 
-                        const safeEmpName = empName.replace(/'/g, "\\'");
-                        const safeRoute = route.replace(/'/g, "\\'");
-
                         let actionButtonsHtml = '';
                         if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
                                 </div>
                             `;
                         } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
                                 </div>
                             `;
                         }
@@ -629,15 +539,15 @@
                                 <div class="text-slate-600"><strong>行程：</strong>${route} (${transport})</div>
                                 <div class="text-slate-600"><strong>事由：</strong>${reason}</div>
                                 <div class="text-slate-600"><strong>費用/預支：</strong>${expense}</div>
-                                <div class="text-slate-500 text-[11px]"><strong>代理人：</strong>${proxy1} ${proxy2 && proxy2 !== '無' ? '/ ' + proxy2 : ''}</div>
+                                <div class="text-slate-500 text-[11px]"><strong>代理人：</strong>${proxyDisplay}</div>
                                 ${note ? `<div class="text-slate-600 text-[11px] bg-slate-100 p-1.5 rounded"><strong>簽核備註：</strong>${note}</div>` : ''}
                                 ${actionButtonsHtml}
                             </div>
                         `;
                     }).join('');
                 })
-                .catch(() => {
-                    listDiv.innerHTML = '<div class="text-center text-rose-500 py-4">讀取 CSV 資料失敗，請確認 Google Sheet 發布與權限。</div>';
+                .catch(err => {
+                    listDiv.innerHTML = `<div class="text-center text-rose-500 py-4">讀取紀錄失敗：${err.message}</div>`;
                 });
         }
     </script>
