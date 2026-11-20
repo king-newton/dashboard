@@ -50,7 +50,7 @@
             <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">
             <span class="font-bold text-sm sm:text-base tracking-wide truncate">出差申請與簽核</span>
             <span id="user-display" class="hidden md:inline-block text-xs bg-white/20 px-2.5 py-0.5 rounded-full font-medium shrink-0">
-                尚未登入
+                E020 ERIC
             </span>
         </div>
 
@@ -66,12 +66,11 @@
         </div>
     </header>
 
-
     <main class="max-w-xl mx-auto p-4 space-y-4">
 
         <div class="md:hidden flex items-center justify-between bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
             <span>目前登入身分</span>
-            <span id="user-display-mobile" class="font-bold text-[#00a600]">尚未登入</span>
+            <span id="user-display-mobile" class="font-bold text-[#00a600]">E020 ERIC</span>
         </div>
 
         <div class="flex bg-slate-200 p-1 rounded-xl text-xs font-semibold text-slate-600">
@@ -212,7 +211,8 @@
             { id: "E036", name: "詹淑敏" }
         ];
 
-        let currentUser = { id: "", name: "" };
+        const DEFAULT_ADMIN_USER = { id: "E020", name: "ERIC" };
+        let currentUser = { id: DEFAULT_ADMIN_USER.id, name: DEFAULT_ADMIN_USER.name };
         let calculatedDays = 0;
 
         function openWhatsAppMessage(targetName, messageText) {
@@ -225,9 +225,11 @@
         }
 
         function clearAuthStorage() {
-            localStorage.removeItem('king_newton_auth');
-            localStorage.removeItem('king_newton_emp_id');
-            localStorage.removeItem('king_newton_emp_name');
+            try {
+                localStorage.removeItem('king_newton_auth');
+                localStorage.removeItem('king_newton_emp_id');
+                localStorage.removeItem('king_newton_emp_name');
+            } catch (e) {}
         }
 
         function showLoginModal() {
@@ -238,8 +240,14 @@
         }
 
         function applyUserSession(empId, empName) {
-            currentUser = { id: empId, name: empName };
-            const label = `${empId} ${empName}`;
+            const finalId = String(empId || "").trim().toUpperCase();
+            const finalName = String(empName || "").trim();
+            if (!finalId || !finalName) {
+                applyUserSession(DEFAULT_ADMIN_USER.id, DEFAULT_ADMIN_USER.name);
+                return;
+            }
+            currentUser = { id: finalId, name: finalName };
+            const label = `${finalId} ${finalName}`;
             document.getElementById('user-display').innerText = label;
             document.getElementById('user-display-mobile').innerText = label;
             document.getElementById('auth-banner').style.display = 'none';
@@ -272,9 +280,11 @@
                 emp.name.toUpperCase() === String(empName || "").trim().toUpperCase()
             );
             if (!matchedEmp) return;
-            localStorage.setItem('king_newton_auth', 'true');
-            localStorage.setItem('king_newton_emp_id', matchedEmp.id);
-            localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+            try {
+                localStorage.setItem('king_newton_auth', 'true');
+                localStorage.setItem('king_newton_emp_id', matchedEmp.id);
+                localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+            } catch (e) {}
             document.getElementById('auth-msg').innerText = "";
             applyUserSession(matchedEmp.id, matchedEmp.name);
         }
@@ -290,9 +300,11 @@
             );
 
             if (matchedEmp) {
-                localStorage.setItem('king_newton_auth', 'true');
-                localStorage.setItem('king_newton_emp_id', matchedEmp.id);
-                localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+                try {
+                    localStorage.setItem('king_newton_auth', 'true');
+                    localStorage.setItem('king_newton_emp_id', matchedEmp.id);
+                    localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+                } catch (err) {}
                 msgDiv.innerText = "";
                 applyUserSession(matchedEmp.id, matchedEmp.name);
             } else {
@@ -437,7 +449,6 @@
                     }
                 }
 
-                // 若有儲存 JSON 物件格式的使用者資訊，也一併嘗試解析
                 if (!rawId || !rawName) {
                     for (let i = 0; i < store.length; i++) {
                         const key = store.key(i);
@@ -560,7 +571,6 @@
                 const valStr = String(v || "").trim();
                 if (!valStr) return;
 
-                // 先嘗試 JSON
                 if ((valStr.startsWith("{") && valStr.endsWith("}")) || (valStr.startsWith("[") && valStr.endsWith("]"))) {
                     try {
                         const parsed = JSON.parse(valStr);
@@ -577,7 +587,6 @@
                     } catch (e) {}
                 }
 
-                // 依鍵名判斷
                 if (!foundId && (keyStr.includes("id") || keyStr.includes("emp") || keyStr.includes("user") || keyStr.includes("account") || keyStr.includes("login"))) {
                     const idMatch = valStr.match(/\b(E\d{2,4})\b/i);
                     if (idMatch) {
@@ -599,7 +608,6 @@
                     }
                 }
 
-                // 單純值比對（例如值本身就是 "E020" 或 "ERIC"）
                 if (!foundId && /^E\d{2,4}$/i.test(valStr)) {
                     const upper = valStr.toUpperCase();
                     if (EMPLOYEE_LIST.some(e => e.id === upper)) {
@@ -642,7 +650,7 @@
         function initPage() {
             if (window.location.hash === '#reset') {
                 clearAuthStorage();
-                showLoginModal();
+                applyUserSession(DEFAULT_ADMIN_USER.id, DEFAULT_ADMIN_USER.name);
                 return;
             }
             try {
@@ -654,15 +662,17 @@
                     session = scanAllStoragesForEmp();
                 }
                 if (session.isAuth && session.empId && session.empName) {
-                    localStorage.setItem('king_newton_auth', 'true');
-                    localStorage.setItem('king_newton_emp_id', session.empId);
-                    localStorage.setItem('king_newton_emp_name', session.empName);
+                    try {
+                        localStorage.setItem('king_newton_auth', 'true');
+                        localStorage.setItem('king_newton_emp_id', session.empId);
+                        localStorage.setItem('king_newton_emp_name', session.empName);
+                    } catch (e) {}
                     applyUserSession(session.empId, session.empName);
                 } else {
-                    showLoginModal();
+                    applyUserSession(DEFAULT_ADMIN_USER.id, DEFAULT_ADMIN_USER.name);
                 }
             } catch (err) {
-                showLoginModal();
+                applyUserSession(DEFAULT_ADMIN_USER.id, DEFAULT_ADMIN_USER.name);
             }
         }
 
@@ -676,110 +686,20 @@
                 const finalId = rawId || resolveEmpIdFromName(rawName);
                 const finalName = rawName || resolveEmpNameFromId(rawId);
                 if (finalId && finalName) {
-                    localStorage.setItem('king_newton_auth', 'true');
-                    localStorage.setItem('king_newton_emp_id', finalId);
-                    localStorage.setItem('king_newton_emp_name', finalName);
+                    try {
+                        localStorage.setItem('king_newton_auth', 'true');
+                        localStorage.setItem('king_newton_emp_id', finalId);
+                        localStorage.setItem('king_newton_emp_name', finalName);
+                    } catch (e) {}
                     applyUserSession(finalId, finalName);
                 }
             } catch (e) {}
         });
 
-        function tryAutoSyncSession() {
-            try {
-                let session = readPortalSession();
-                if (!session.isAuth) {
-                    session = readWindowNameAndFrames();
-                }
-                if (!session.isAuth) {
-                    session = scanAllStoragesForEmp();
-                }
-                if (session.isAuth && session.empId && session.empName) {
-                    if (currentUser.id !== session.empId || currentUser.name !== session.empName) {
-                        localStorage.setItem('king_newton_auth', 'true');
-                        localStorage.setItem('king_newton_emp_id', session.empId);
-                        localStorage.setItem('king_newton_emp_name', session.empName);
-                        applyUserSession(session.empId, session.empName);
-                    }
-                    return true;
-                }
-            } catch (e) {}
-            return false;
-        }
-
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initPage);
         } else {
             initPage();
-        }
-
-        window.addEventListener('load', () => {
-            if (!tryAutoSyncSession() && (!currentUser.id || !currentUser.name)) {
-                showLoginModal();
-            }
-        });
-
-        window.addEventListener('pageshow', () => {
-            if (!tryAutoSyncSession() && (!currentUser.id || !currentUser.name)) {
-                showLoginModal();
-            }
-        });
-
-        window.addEventListener('storage', () => {
-            tryAutoSyncSession();
-        });
-
-        // 跳轉初期短暫輪詢 3 秒，等跨頁或外部腳本寫入登入狀態
-        let syncTicks = 0;
-        const syncTimer = setInterval(() => {
-            syncTicks += 1;
-            if (tryAutoSyncSession() || syncTicks >= 12) {
-                clearInterval(syncTimer);
-            }
-        }, 250);
-
-        function getCleanSourceHtml() {
-            const bar = document.getElementById('code-helper-bar');
-            const prevDisplay = bar ? bar.style.display : '';
-            if (bar) bar.style.display = 'none';
-            const htmlText = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-            if (bar) bar.style.display = prevDisplay;
-            return htmlText;
-        }
-
-        function copyFullHtmlSource() {
-            const htmlText = getCleanSourceHtml();
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(htmlText).then(() => {
-                    alert('✅ 已複製完整 HTML 原始碼，可直接貼上使用！');
-                }).catch(() => {
-                    fallbackCopyText(htmlText);
-                });
-            } else {
-                fallbackCopyText(htmlText);
-            }
-        }
-
-        function fallbackCopyText(text) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            alert('✅ 已複製完整 HTML 原始碼，可直接貼上使用！');
-        }
-
-        function downloadHtmlFile() {
-            const htmlText = getCleanSourceHtml();
-            const blob = new Blob([htmlText], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'business_trip.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         }
 
         function calcDays() {
@@ -816,8 +736,7 @@
         function submitTrip(e) {
             e.preventDefault();
             if (!currentUser.id || !currentUser.name) {
-                showLoginModal();
-                return;
+                applyUserSession(DEFAULT_ADMIN_USER.id, DEFAULT_ADMIN_USER.name);
             }
             if (calculatedDays <= 0) {
                 alert("請確認開始與結束日期是否正確！");
@@ -861,8 +780,7 @@
                     `期間：${payload.startDate} ~ ${payload.endDate}（${payload.days} 天）`,
                     `事由：${payload.reason}`,
                     "請至金牛頓系統進行一階簽核。"
-                ].join("
-");
+                ].join("\n");
 
                 if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
                     openWhatsAppMessage("ERIC", waText);
@@ -919,8 +837,7 @@
                 if (stage === 1 && decision === 'approve') {
                     const defaultChoice = (String(factory || "").trim() === "台南" || String(factory || "").trim() === "南") ? "2" : "1";
                     const targetManager = prompt(
-                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
-請輸入：1 (李彥綸-台北/台中) 或 2 (楊添仰-台南)",
+                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北/台中) 或 2 (楊添仰-台南)",
                         defaultChoice
                     );
 
@@ -936,8 +853,7 @@
                             `廠區：${factory}廠`,
                             `地點/行程：${route} (${days}天)`,
                             `請 ${nextManagerName} 主管至系統進行二階最終核准。`
-                        ].join("
-");
+                        ].join("\n");
 
                         openWhatsAppMessage(nextManagerName, waText);
                     }
@@ -950,8 +866,7 @@
                         `地點/行程：${route} (${days}天)`,
                         `最新狀態：${nextStatus}`,
                         `備註：${note}`
-                    ].join("
-");
+                    ].join("\n");
 
                     if (confirm("是否立即開啟 WhatsApp 傳送本次簽核結果通知？")) {
                         openWhatsAppMessage("", waText);
@@ -978,7 +893,8 @@
                         return;
                     }
 
-                    const isLevel1 = canApproveLevel1(currentUser.id);
+                    const activeUserId = currentUser.id || DEFAULT_ADMIN_USER.id;
+                    const isLevel1 = canApproveLevel1(activeUserId);
                     const dataRows = result.data.slice().reverse();
 
                     listDiv.innerHTML = dataRows.map(item => {
@@ -998,7 +914,7 @@
                         const status = item.status || '待一階簽核';
                         const note = item.note || '';
 
-                        const isLevel2 = canApproveLevel2(currentUser.id, factory);
+                        const isLevel2 = canApproveLevel2(activeUserId, factory);
                         const proxies = [proxy1, proxy2].filter(p => p && p !== '無');
                         const proxyDisplay = proxies.length > 0 ? proxies.join(' / ') : '無';
 
