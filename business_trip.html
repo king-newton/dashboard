@@ -772,8 +772,7 @@
                     `期間：${payload.startDate} ~ ${payload.endDate}（${payload.days} 天）`,
                     `事由：${payload.reason}`,
                     "請至金牛頓系統進行一階簽核。"
-                ].join("
-");
+                ].join("\n");
 
                 if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
                     openWhatsAppMessage("ERIC", waText);
@@ -830,8 +829,7 @@
                 if (stage === 1 && decision === 'approve') {
                     const defaultChoice = (String(factory || "").trim() === "台南" || String(factory || "").trim() === "南") ? "2" : "1";
                     const targetManager = prompt(
-                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
-請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)",
+                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)",
                         defaultChoice
                     );
 
@@ -847,8 +845,7 @@
                             `廠區：${factory}廠`,
                             `地點/行程：${route} (${days}天)`,
                             `請 ${nextManagerName} 主管至系統進行二階最終核准。`
-                        ].join("
-");
+                        ].join("\n");
 
                         openWhatsAppMessage(nextManagerName, waText);
                     }
@@ -861,8 +858,7 @@
                         `地點/行程：${route} (${days}天)`,
                         `最新狀態：${nextStatus}`,
                         `備註：${note}`
-                    ].join("
-");
+                    ].join("\n");
 
                     if (confirm("是否立即開啟 WhatsApp 傳送本次簽核結果通知？")) {
                         openWhatsAppMessage("", waText);
