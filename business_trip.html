@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>金牛頓公司活動行事曆與出差簽核</title>
+    <title>金牛頓公司活動行事曆</title>
     <style>
         /* --- 電腦版樣式：完全保持不動 --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
@@ -36,15 +36,6 @@
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
 
-        /* 出差送簽與審核區塊樣式 */
-        .trip-workflow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 12px; }
-        .trip-form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
-        .trip-btn-primary { height: 40px; background: #00897b; color: white; border: none; padding: 0 18px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .trip-btn-primary:hover { background: #00695c; }
-        .trip-btn-secondary { height: 34px; background: #0d47a1; color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .trip-btn-secondary:hover { background: #08306b; }
-        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; background: #e0f2f1; color: #004d40; font-weight: bold; }
-
         /* --- 手機版專屬修正區 (只在螢幕 600px 以下生效) --- */
         #mobileCards { display: none; padding: 10px; background: #f1f3f4; }
 
@@ -74,8 +65,6 @@
 </head>
 <body>
 
-    <iframe name="trip_hidden_iframe" id="trip_hidden_iframe" style="display:none;" onload="if(tripSubmitted) { handleTripSubmitSuccess(); }"></iframe>
-
     <h2>📊 金牛頓公司活動行事曆</h2>
 
     <div id="calendarContainer">
@@ -97,91 +86,6 @@
             <tbody id="calendarBody"></tbody>
         </table>
         <div id="mobileCards"></div>
-    </div>
-
-    <!-- 出差單送簽與 WhatsApp 通知流程區（比照請假單兩階段通知） -->
-    <div class="action-section no-print">
-        <h3 style="margin-top:0; color:#00695c;">🧳 出差單申請與送簽 WhatsApp 通知</h3>
-        <div class="trip-workflow-grid">
-            <!-- 1. 填寫並送出出差單 -->
-            <div style="background:#f8fffe; border:1px solid #b2dfdb; border-radius:6px; padding:15px;">
-                <h4 style="margin:0 0 10px 0; color:#004d40;">① 填寫出差申請（送出後通知一階主管 ERIC）</h4>
-                <form id="businessTripForm" action="https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec" method="POST" target="trip_hidden_iframe" onsubmit="prepareTripSubmit()">
-                    <input type="hidden" name="action" value="submitBusinessTrip">
-                    <div class="trip-form-row">
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block;">出差人員</label>
-                            <select id="tripEmpName" name="empName" required style="width:100%;"></select>
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block;">出差天數</label>
-                            <input type="number" id="tripDays" name="days" step="0.5" min="0.5" value="1" required style="width:100%;">
-                        </div>
-                    </div>
-                    <div class="trip-form-row">
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block;">開始日期</label>
-                            <input type="date" id="tripStartDate" name="startDate" onchange="syncTripEndDate()" required style="width:100%;">
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block;">結束日期</label>
-                            <input type="date" id="tripEndDate" name="endDate" onchange="recalcTripDays()" required style="width:100%;">
-                        </div>
-                    </div>
-                    <div class="trip-form-row">
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block;">出差地點 / 路線</label>
-                            <input type="text" id="tripRoute" name="route" placeholder="例：台中客戶現場" required style="width:100%;">
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block;">出差事由</label>
-                            <input type="text" id="tripReason" name="reason" placeholder="例：機台巡檢與改機評估" required style="width:100%;">
-                        </div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:8px;">
-                        <span style="font-size:12px; color:#546e7a;">送出後可一鍵開啟 WhatsApp 通知一階主管 ERIC</span>
-                        <button type="submit" id="tripSubmitBtn" class="trip-btn-primary">🚀 送出出差單並通知一階</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- 2. 主管簽核與二階 WhatsApp 通知 -->
-            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:15px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h4 style="margin:0; color:#0d47a1;">② 出差簽核清單（一階核准後通知二階主管）</h4>
-                    <button type="button" onclick="loadPendingTrips()" class="trip-btn-secondary">🔄 重整清單</button>
-                </div>
-                <div class="trip-form-row">
-                    <div>
-                        <label style="font-size:12px; font-weight:bold; display:block;">簽核層級</label>
-                        <select id="tripManagerStep" onchange="updateTripManagerOptions()" style="width:100%;">
-                            <option value="1">第一層主管 (一階審核)</option>
-                            <option value="2">第二層主管 (二階最終核准)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:12px; font-weight:bold; display:block;">簽核主管</label>
-                        <select id="tripManagerSelect" style="width:100%;"></select>
-                    </div>
-                </div>
-                <div style="overflow-x:auto; max-height:240px; overflow-y:auto;">
-                    <table style="margin-bottom:0; font-size:12px;">
-                        <thead>
-                            <tr>
-                                <th>單號</th>
-                                <th>人員</th>
-                                <th>地點/天數</th>
-                                <th>狀態</th>
-                                <th>簽核與通知</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tripPendingBody">
-                            <tr><td colspan="5" style="color:#78909c;">點擊「重整清單」載入待簽核出差單，或直接測試通知流程</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="suggestion-display-box">
@@ -246,8 +150,6 @@
 
         let leaveRecords = [];
         let suggestions = [];
-        let tripSubmitted = false;
-        let lastSubmittedTripSnapshot = null;
 
         function normalizeDateStr(val) {
             if (!val) return '';
@@ -268,217 +170,69 @@
             return st === '已核准' || (st.includes('核准') && !st.includes('待') && !st.includes('未') && !st.includes('駁回'));
         }
 
-        function getNextWorkday(date = new Date()) {
-            const next = new Date(date);
-            next.setDate(next.getDate() + 1);
-            while (next.getDay() === 0 || next.getDay() === 6) {
-                next.setDate(next.getDate() + 1);
-            }
-            return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
-        }
+        // ==========================================
+        // 出差單送簽 WhatsApp 通知處理函式（比照 leave.html 格式）
+        // ==========================================
 
-        function syncTripEndDate() {
-            const s = document.getElementById('tripStartDate').value;
-            const e = document.getElementById('tripEndDate').value;
-            if (s && (!e || e < s)) {
-                document.getElementById('tripEndDate').value = s;
-            }
-            recalcTripDays();
-        }
-
-        function recalcTripDays() {
-            const s = document.getElementById('tripStartDate').value;
-            const e = document.getElementById('tripEndDate').value;
-            if (!s || !e) return;
-            const d1 = new Date(s + 'T00:00:00');
-            const d2 = new Date(e + 'T00:00:00');
-            if (d2 >= d1) {
-                const diff = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-                document.getElementById('tripDays').value = diff;
-            }
-        }
-
-        function openWhatsAppNotify(targetName, messageText) {
-            const encodedText = encodeURIComponent(messageText);
-            const phone = TRIP_MANAGER_PHONES[targetName] || "";
-            const waUrl = phone
-                ? `https://wa.me/${phone}?text=${encodedText}`
-                : `https://api.whatsapp.com/send?text=${encodedText}`;
-            window.open(waUrl, '_blank');
-        }
-
-        function prepareTripSubmit() {
-            tripSubmitted = true;
-            lastSubmittedTripSnapshot = {
-                empName: document.getElementById('tripEmpName').value,
-                startDate: document.getElementById('tripStartDate').value,
-                endDate: document.getElementById('tripEndDate').value,
-                days: document.getElementById('tripDays').value,
-                route: document.getElementById('tripRoute').value,
-                reason: document.getElementById('tripReason').value
-            };
-            const btn = document.getElementById('tripSubmitBtn');
-            btn.innerText = "傳送中...";
-            btn.disabled = true;
-        }
-
-        function handleTripSubmitSuccess() {
-            const snap = lastSubmittedTripSnapshot || {};
+        // 1. 員工送出出差單後 -> 通知一階主管 ERIC
+        function handleTripSubmitSuccess(empName, routeLocation, startDate, endDate, days, reason) {
             alert("🎉 出差單已成功送出！");
 
-            const waText =
+            const waText = encodeURIComponent(
                 `【出差審核通知】
 ` +
-                `同仁：${snap.empName || ''}
+                `同仁：${empName}
 ` +
-                `地點/行程：${snap.route || ''}
+                `地點/行程：${routeLocation}
 ` +
-                `期間：${snap.startDate || ''} 至 ${snap.endDate || ''}（${snap.days || 1} 天）
+                `期間：${startDate} 至 ${endDate}（${days} 天）
 ` +
-                `事由：${snap.reason || ''}
+                `事由：${reason}
 ` +
-                `請至金牛頓系統進行一階簽核。`;
+                `請至金牛頓系統進行一階簽核。`
+            );
 
+            const ericPhone = TRIP_MANAGER_PHONES["ERIC"] || "";
             if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
-                openWhatsAppNotify("ERIC", waText);
-            }
-
-            document.getElementById('businessTripForm').reset();
-            const loggedInName = localStorage.getItem('king_newton_emp_name');
-            if (loggedInName && nameList.includes(loggedInName) && loggedInName !== "全部人員") {
-                document.getElementById('tripEmpName').value = loggedInName;
-            }
-            const defaultWorkday = getNextWorkday(new Date());
-            document.getElementById('tripStartDate').value = defaultWorkday;
-            document.getElementById('tripEndDate').value = defaultWorkday;
-            document.getElementById('tripDays').value = 1;
-
-            const btn = document.getElementById('tripSubmitBtn');
-            btn.innerText = "🚀 送出出差單並通知一階";
-            btn.disabled = false;
-            tripSubmitted = false;
-            lastSubmittedTripSnapshot = null;
-
-            loadPendingTrips();
-        }
-
-        function updateTripManagerOptions() {
-            const step = document.getElementById('tripManagerStep').value;
-            const sel = document.getElementById('tripManagerSelect');
-            sel.innerHTML = '';
-            if (step === '1') {
-                sel.add(new Option("ERIC (一階主管 / 管理員)", "ERIC"));
-            } else {
-                sel.add(new Option("李彥綸 (二階主管)", "李彥綸"));
-                sel.add(new Option("楊添仰 (南區二階主管)", "楊添仰"));
+                const waUrl = ericPhone 
+                    ? `https://wa.me/${ericPhone}?text=${waText}` 
+                    : `https://api.whatsapp.com/send?text=${waText}`;
+                window.open(waUrl, '_blank');
             }
         }
 
-        async function loadPendingTrips() {
-            const tbody = document.getElementById('tripPendingBody');
-            tbody.innerHTML = `<tr><td colspan="5" style="color:#78909c;">正在載入出差單清單...</td></tr>`;
-            try {
-                const res = await fetch(`${TRIP_GAS_API_URL}?action=getBusinessTrips&t=${new Date().getTime()}`);
-                const json = await res.json();
-                const list = Array.isArray(json.data) ? json.data : [];
-                const pending = list.filter(row => !isApprovedStatus(row.status));
+        // 2. 一階主管核准出差單後 -> 選擇通知二階主管（李彥綸 / 楊添仰）
+        function handleTripApproveStep1Success(managerName, applicantName, routeLocation, days, tripId) {
+            const targetManager = prompt(
+                "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
+請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)", 
+                "1"
+            );
+            
+            let nextManagerName = "";
+            if (targetManager === "1") nextManagerName = "李彥綸";
+            else if (targetManager === "2") nextManagerName = "楊添仰";
 
-                if (pending.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="color:#78909c;">目前無待簽核出差單</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = pending.map(item => {
-                    const id = String(item.id || '');
-                    const empName = String(item.empName || item.name || '');
-                    const route = String(item.route || item.reason || '');
-                    const days = item.days || 1;
-                    const status = String(item.status || '待一階簽核');
-                    const safeId = encodeURIComponent(id);
-                    const safeEmp = encodeURIComponent(empName);
-                    const safeRoute = encodeURIComponent(route);
-                    const safeDays = encodeURIComponent(String(days));
-
-                    return `
-                        <tr>
-                            <td style="font-family:monospace;">${id}</td>
-                            <td style="font-weight:bold;">${empName}</td>
-                            <td style="text-align:left;">${route} (${days}天)</td>
-                            <td><span class="status-badge">${status}</span></td>
-                            <td>
-                                <button type="button" class="trip-btn-secondary" onclick="approveTripItem(decodeURIComponent('${safeId}'), decodeURIComponent('${safeEmp}'), decodeURIComponent('${safeRoute}'), decodeURIComponent('${safeDays}'))">
-                                    ✍️ 核准並通知
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error("載入待簽核出差單失敗", err);
-                tbody.innerHTML = `<tr><td colspan="5" style="color:#c62828;">無法讀取待簽核清單，請稍後再試</td></tr>`;
-            }
-        }
-
-        async function approveTripItem(tripId, applicantName, routeOrLoc, days) {
-            const loggedInName = localStorage.getItem('king_newton_emp_name') || 'ERIC';
-            const step = parseInt(document.getElementById('tripManagerStep').value, 10);
-            const managerName = document.getElementById('tripManagerSelect').value;
-
-            if (loggedInName !== 'ERIC' && loggedInName !== managerName) {
-                alert(`權限錯誤：您的登入身分是【${loggedInName}】，不可使用【${managerName}】進行簽核！`);
-                return;
-            }
-            if (applicantName === loggedInName && loggedInName !== 'ERIC') {
-                alert("防呆機制觸發：申請人不能自行簽核自己的出差單！");
-                return;
-            }
-            if (!confirm(`確定要以【第 ${step} 層主管：${managerName}】核准出差單 ${tripId} 嗎？`)) return;
-
-            try {
-                const res = await fetch(TRIP_GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'approveBusinessTrip',
-                        tripId: tripId,
-                        step: step,
-                        managerName: managerName
-                    })
-                });
-                const json = await res.json();
-                alert(`✅ 簽核完成！${json.message || ''}`);
-
-                if (step === 1) {
-                    const choice = prompt(
-                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
-請輸入：1 (李彥綸) 或 2 (楊添仰)",
-                        "1"
-                    );
-                    let nextManager = "";
-                    if (choice === "1") nextManager = "李彥綸";
-                    else if (choice === "2") nextManager = "楊添仰";
-
-                    if (nextManager) {
-                        const waText =
-                            `【出差二階簽核通知】
+            if (nextManagerName) {
+                const waText = encodeURIComponent(
+                    `【出差二階簽核通知】
 ` +
-                            `一階主管 ${managerName} 已核准。
+                    `一階主管 ${managerName} 已核准。
 ` +
-                            `申請同仁：${applicantName}
+                    `申請同仁：${applicantName}
 ` +
-                            `地點/行程：${routeOrLoc}（${days} 天）
+                    `地點/行程：${routeLocation} (${days}天)
 ` +
-                            `單號：${tripId}
+                    `單號：${tripId}
 ` +
-                            `請 ${nextManager} 主管至系統進行二階最終核准。`;
-                        openWhatsAppNotify(nextManager, waText);
-                    }
-                }
+                    `請 ${nextManagerName} 主管至系統進行二階最終核准。`
+                );
 
-                await fetchData();
-                await loadPendingTrips();
-            } catch (err) {
-                console.error("出差簽核失敗", err);
-                alert("簽核送出時發生錯誤，請稍後再試。");
+                const nextPhone = TRIP_MANAGER_PHONES[nextManagerName] || "";
+                const waUrl = nextPhone 
+                    ? `https://wa.me/${nextPhone}?text=${waText}` 
+                    : `https://api.whatsapp.com/send?text=${waText}`;
+                window.open(waUrl, '_blank');
             }
         }
 
@@ -725,23 +479,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const qSel = document.getElementById('queryNameSelect');
-            const empSel = document.getElementById('tripEmpName');
-            nameList.forEach(n => {
-                qSel.add(new Option(n, n));
-                if (n !== "全部人員") {
-                    empSel.add(new Option(n, n));
-                }
-            });
-
-            const loggedInName = localStorage.getItem('king_newton_emp_name');
-            if (loggedInName && nameList.includes(loggedInName) && loggedInName !== "全部人員") {
-                empSel.value = loggedInName;
-            }
-
-            const defaultWorkday = getNextWorkday(new Date());
-            document.getElementById('tripStartDate').value = defaultWorkday;
-            document.getElementById('tripEndDate').value = defaultWorkday;
-            updateTripManagerOptions();
+            nameList.forEach(n => qSel.add(new Option(n, n)));
             fetchData();
         });
     </script>
