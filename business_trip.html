@@ -306,6 +306,234 @@
             logoutTrigger.addEventListener(evt, () => clearTimeout(pressTimer));
         });
 
+        function resolveEmpIdFromName(empName) {
+            const cleanName = String(empName || "").trim().toUpperCase();
+            if (!cleanName) return "";
+            const found = EMPLOYEE_LIST.find(emp =>
+                emp.name.toUpperCase() === cleanName ||
+                cleanName.includes(emp.name.toUpperCase())
+            );
+            return found ? found.id : "";
+        }
+
+        function resolveEmpNameFromId(empId) {
+            const cleanId = String(empId || "").trim().toUpperCase();
+            if (!cleanId) return "";
+            const found = EMPLOYEE_LIST.find(emp => emp.id.toUpperCase() === cleanId);
+            return found ? found.name : "";
+        }
+
+        function readCookieMap() {
+            const map = {};
+            try {
+                const raw = document.cookie || '';
+                raw.split(';').forEach(pair => {
+                    const idx = pair.indexOf('=');
+                    if (idx > -1) {
+                        const k = decodeURIComponent(pair.slice(0, idx).trim());
+                        const v = decodeURIComponent(pair.slice(idx + 1).trim());
+                        if (k) map[k] = v;
+                    }
+                });
+            } catch (e) {}
+            return map;
+        }
+
+        function readPortalSession() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hashStr = (window.location.hash || '').replace(/^#/, '');
+            const hashParams = new URLSearchParams(hashStr.includes('?') ? hashStr.split('?')[1] : hashStr);
+
+            const qId = (
+                urlParams.get('empId') || urlParams.get('emp_id') || urlParams.get('id') ||
+                hashParams.get('empId') || hashParams.get('emp_id') || hashParams.get('id') || ''
+            ).trim().toUpperCase();
+            const qName = (
+                urlParams.get('empName') || urlParams.get('emp_name') || urlParams.get('name') ||
+                hashParams.get('empName') || hashParams.get('emp_name') || hashParams.get('name') || ''
+            ).trim();
+
+            if (qId || qName) {
+                const finalId = qId || resolveEmpIdFromName(qName);
+                const finalName = qName || resolveEmpNameFromId(qId);
+                if (finalId && finalName) {
+                    return { isAuth: true, empId: finalId, empName: finalName };
+                }
+            }
+
+            const possibleAuthKeys = [
+                'king_newton_auth',
+                'isAuth',
+                'is_auth',
+                'portal_auth',
+                'auth_status',
+                'logged_in',
+                'isLoggedIn'
+            ];
+            const possibleIdKeys = [
+                'king_newton_emp_id',
+                'empId',
+                'emp_id',
+                'employeeId',
+                'employee_id',
+                'userId',
+                'user_id'
+            ];
+            const possibleNameKeys = [
+                'king_newton_emp_name',
+                'empName',
+                'emp_name',
+                'employeeName',
+                'employee_name',
+                'userName',
+                'user_name',
+                'name'
+            ];
+
+            const cookieMap = readCookieMap();
+            const cookieStorage = {
+                length: Object.keys(cookieMap).length,
+                key: (i) => Object.keys(cookieMap)[i] || null,
+                getItem: (k) => Object.prototype.hasOwnProperty.call(cookieMap, k) ? cookieMap[k] : null
+            };
+            const storages = [];
+            try { storages.push(window.localStorage); } catch (e) {}
+            try { storages.push(window.sessionStorage); } catch (e) {}
+            storages.push(cookieStorage);
+
+            for (const store of storages) {
+                let rawId = "";
+                let rawName = "";
+                let rawAuth = "";
+
+                for (const k of possibleIdKeys) {
+                    const v = store.getItem(k);
+                    if (v && String(v).trim()) {
+                        rawId = String(v).trim().toUpperCase();
+                        break;
+                    }
+                }
+                for (const k of possibleNameKeys) {
+                    const v = store.getItem(k);
+                    if (v && String(v).trim()) {
+                        rawName = String(v).trim();
+                        break;
+                    }
+                }
+                for (const k of possibleAuthKeys) {
+                    const v = store.getItem(k);
+                    if (v && String(v).trim()) {
+                        rawAuth = String(v).trim().toLowerCase();
+                        break;
+                    }
+                }
+
+                // 若有儲存 JSON 物件格式的使用者資訊，也一併嘗試解析
+                if (!rawId || !rawName) {
+                    for (let i = 0; i < store.length; i++) {
+                        const key = store.key(i);
+                        const val = store.getItem(key);
+                        if (!val || (!val.startsWith('{') && !val.startsWith('['))) continue;
+                        try {
+                            const parsed = JSON.parse(val);
+                            if (parsed && typeof parsed === 'object') {
+                                const obj = parsed.user || parsed.employee || parsed.currentUser || parsed;
+                                if (!rawId && (obj.empId || obj.emp_id || obj.id || obj.employeeId)) {
+                                    rawId = String(obj.empId || obj.emp_id || obj.id || obj.employeeId).trim().toUpperCase();
+                                }
+                                if (!rawName && (obj.empName || obj.emp_name || obj.name || obj.employeeName)) {
+                                    rawName = String(obj.empName || obj.emp_name || obj.name || obj.employeeName).trim();
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                }
+
+                if (!rawId && rawName) rawId = resolveEmpIdFromName(rawName);
+                if (!rawName && rawId) rawName = resolveEmpNameFromId(rawId);
+
+                const authFlagValid = (rawAuth === 'true' || rawAuth === '1' || rawAuth === 'yes' || rawAuth === 'logged_in');
+                if ((authFlagValid && rawId && rawName) || (rawId && rawName)) {
+                    return { isAuth: true, empId: rawId, empName: rawName };
+                }
+            }
+
+            return { isAuth: false, empId: "", empName: "" };
+        }
+
+        function parseCombinedEmpString(rawText) {
+            const text = String(rawText || "").trim();
+            if (!text) return { empId: "", empName: "" };
+
+            const idMatch = text.match(/\b(E\d{2,4})\b/i);
+            const foundId = idMatch ? idMatch[1].toUpperCase() : resolveEmpIdFromName(text);
+
+            let cleanedName = text
+                .replace(/\b(E\d{2,4})\b/ig, "")
+                .replace(/[\(\)\-\/\:\|，,]/g, " ")
+                .trim();
+
+            const foundName = resolveEmpNameFromId(foundId) || (cleanedName ? (resolveEmpIdFromName(cleanedName) ? EMPLOYEE_LIST.find(e => e.id === resolveEmpIdFromName(cleanedName)).name : cleanedName) : "");
+            return { empId: foundId || "", empName: foundName || "" };
+        }
+
+        function readWindowNameAndFrames() {
+            const candidates = [];
+            try {
+                if (window.name) candidates.push(window.name);
+            } catch (e) {}
+
+            const framesToTry = [];
+            try { if (window.opener && window.opener !== window) framesToTry.push(window.opener); } catch (e) {}
+            try { if (window.parent && window.parent !== window) framesToTry.push(window.parent); } catch (e) {}
+
+            for (const win of framesToTry) {
+                try {
+                    if (win.localStorage) {
+                        const id = (win.localStorage.getItem('king_newton_emp_id') || win.localStorage.getItem('empId') || '').trim().toUpperCase();
+                        const name = (win.localStorage.getItem('king_newton_emp_name') || win.localStorage.getItem('empName') || '').trim();
+                        if (id || name) {
+                            const finalId = id || resolveEmpIdFromName(name);
+                            const finalName = name || resolveEmpNameFromId(id);
+                            if (finalId && finalName) return { isAuth: true, empId: finalId, empName: finalName };
+                        }
+                    }
+                } catch (e) {}
+                try {
+                    if (win.sessionStorage) {
+                        const id = (win.sessionStorage.getItem('king_newton_emp_id') || win.sessionStorage.getItem('empId') || '').trim().toUpperCase();
+                        const name = (win.sessionStorage.getItem('king_newton_emp_name') || win.sessionStorage.getItem('empName') || '').trim();
+                        if (id || name) {
+                            const finalId = id || resolveEmpIdFromName(name);
+                            const finalName = name || resolveEmpNameFromId(id);
+                            if (finalId && finalName) return { isAuth: true, empId: finalId, empName: finalName };
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            for (const raw of candidates) {
+                if (!raw) continue;
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        const obj = parsed.user || parsed.employee || parsed.currentUser || parsed;
+                        const id = String(obj.empId || obj.emp_id || obj.id || obj.employeeId || '').trim().toUpperCase();
+                        const name = String(obj.empName || obj.emp_name || obj.name || obj.employeeName || '').trim();
+                        const finalId = id || resolveEmpIdFromName(name);
+                        const finalName = name || resolveEmpNameFromId(id);
+                        if (finalId && finalName) return { isAuth: true, empId: finalId, empName: finalName };
+                    }
+                } catch (e) {}
+                const combo = parseCombinedEmpString(raw);
+                if (combo.empId && combo.empName) {
+                    return { isAuth: true, empId: combo.empId, empName: combo.empName };
+                }
+            }
+
+            return { isAuth: false, empId: "", empName: "" };
+        }
+
         function initPage() {
             if (window.location.hash === '#reset') {
                 clearAuthStorage();
@@ -313,12 +541,15 @@
                 return;
             }
             try {
-                const isAuth = localStorage.getItem('king_newton_auth');
-                const empId = (localStorage.getItem('king_newton_emp_id') || '').trim();
-                const empName = (localStorage.getItem('king_newton_emp_name') || '').trim();
-
-                if (isAuth === 'true' && empId && empName) {
-                    applyUserSession(empId, empName);
+                let session = readPortalSession();
+                if (!session.isAuth) {
+                    session = readWindowNameAndFrames();
+                }
+                if (session.isAuth && session.empId && session.empName) {
+                    localStorage.setItem('king_newton_auth', 'true');
+                    localStorage.setItem('king_newton_emp_id', session.empId);
+                    localStorage.setItem('king_newton_emp_name', session.empName);
+                    applyUserSession(session.empId, session.empName);
                 } else {
                     clearAuthStorage();
                     showLoginModal();
@@ -327,6 +558,24 @@
                 showLoginModal();
             }
         }
+
+        window.addEventListener('message', (event) => {
+            try {
+                const data = event && event.data;
+                if (!data || typeof data !== 'object') return;
+                const payload = data.user || data.employee || data.currentUser || data;
+                const rawId = String(payload.empId || payload.emp_id || payload.employeeId || '').trim().toUpperCase();
+                const rawName = String(payload.empName || payload.emp_name || payload.employeeName || payload.name || '').trim();
+                const finalId = rawId || resolveEmpIdFromName(rawName);
+                const finalName = rawName || resolveEmpNameFromId(rawId);
+                if (finalId && finalName) {
+                    localStorage.setItem('king_newton_auth', 'true');
+                    localStorage.setItem('king_newton_emp_id', finalId);
+                    localStorage.setItem('king_newton_emp_name', finalName);
+                    applyUserSession(finalId, finalName);
+                }
+            } catch (e) {}
+        });
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initPage);
