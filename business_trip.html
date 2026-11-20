@@ -174,6 +174,12 @@
     <script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
 
+        const MANAGER_PHONES = {
+            "ERIC": "",
+            "李彥綸": "",
+            "楊添仰": ""
+        };
+
         // 一階簽核人：ERIC (E020)
         const LEVEL1_MANAGER_IDS = ["E020"];
 
@@ -212,6 +218,15 @@
 
         let currentUser = { id: "", name: "" };
         let calculatedDays = 0;
+
+        function openWhatsAppMessage(targetName, messageText) {
+            const phone = (targetName && MANAGER_PHONES[targetName]) ? String(MANAGER_PHONES[targetName]).replace(/[^0-9]/g, "") : "";
+            const encoded = encodeURIComponent(messageText);
+            const waUrl = phone
+                ? `https://wa.me/${phone}?text=${encoded}`
+                : `https://api.whatsapp.com/send?text=${encoded}`;
+            window.open(waUrl, "_blank", "noopener,noreferrer");
+        }
 
         function clearAuthStorage() {
             localStorage.removeItem('king_newton_auth');
@@ -350,33 +365,6 @@
             }
         }
 
-        function buildWhatsAppSummary(payload) {
-            const proxies = [payload.proxy1, payload.proxy2].filter(p => p && p !== "無");
-            const proxyText = proxies.length > 0 ? proxies.join(" / ") : "無";
-
-            return [
-                "【金牛頓工業｜出差申請通知】",
-                `申請人：${payload.empName} (${payload.empId})`,
-                `廠區：${payload.factory}廠`,
-                `期間：${payload.startDate} ~ ${payload.endDate} (共 ${payload.days} 天)`,
-                `行程：${payload.route}`,
-                `事由：${payload.reason}`,
-                `交通：${payload.transport}`,
-                `費用/預支：${payload.expense}`,
-                `代理人：${proxyText}`,
-                `狀態：${payload.status}`
-            ].join("\n");
-        }
-
-        function promptSendWhatsApp(payload) {
-            const wantSend = confirm("出差單已送出！請問是否要將出差資訊傳送到 WhatsApp？");
-            if (wantSend) {
-                const message = buildWhatsAppSummary(payload);
-                const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                window.open(waUrl, "_blank", "noopener,noreferrer");
-            }
-        }
-
         function submitTrip(e) {
             e.preventDefault();
             if (!currentUser.id || !currentUser.name) {
@@ -415,7 +403,23 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                promptSendWhatsApp(payload);
+                alert("🎉 出差單已成功送出！");
+
+                const waText = [
+                    "【出差審核通知】",
+                    `同仁：${payload.empName}`,
+                    `廠區：${payload.factory}廠`,
+                    `地點/行程：${payload.route}`,
+                    `期間：${payload.startDate} ~ ${payload.endDate}（${payload.days} 天）`,
+                    `事由：${payload.reason}`,
+                    "請至金牛頓系統進行一階簽核。"
+                ].join("
+");
+
+                if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
+                    openWhatsAppMessage("ERIC", waText);
+                }
+
                 document.getElementById('tripForm').reset();
                 calculatedDays = 0;
                 document.getElementById('dayCountText').innerText = "共計：0 天";
@@ -431,7 +435,7 @@
             });
         }
 
-        function handleReview(tripId, empId, startDate, stage, decision) {
+        function handleReview(tripId, empId, applicantName, factory, route, days, startDate, stage, decision) {
             const actionLabel = decision === 'approve' ? '核准' : '駁回';
             const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
             if (note === null) return;
@@ -462,7 +466,50 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                alert(`第${stage}階簽核完成，目前狀態：${nextStatus}`);
+                alert(`✅ 第${stage}階簽核完成，目前狀態：${nextStatus}`);
+
+                if (stage === 1 && decision === 'approve') {
+                    const defaultChoice = (String(factory || "").trim() === "台南" || String(factory || "").trim() === "南") ? "2" : "1";
+                    const targetManager = prompt(
+                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
+請輸入：1 (李彥綸-台北/台中) 或 2 (楊添仰-台南)",
+                        defaultChoice
+                    );
+
+                    let nextManagerName = "";
+                    if (targetManager === "1") nextManagerName = "李彥綸";
+                    else if (targetManager === "2") nextManagerName = "楊添仰";
+
+                    if (nextManagerName) {
+                        const waText = [
+                            "【出差二階簽核通知】",
+                            `一階主管 ${currentUser.name} 已核准。`,
+                            `申請同仁：${applicantName}`,
+                            `廠區：${factory}廠`,
+                            `地點/行程：${route} (${days}天)`,
+                            `請 ${nextManagerName} 主管至系統進行二階最終核准。`
+                        ].join("
+");
+
+                        openWhatsAppMessage(nextManagerName, waText);
+                    }
+                } else if (stage === 2 || decision === 'reject') {
+                    const waText = [
+                        "【出差簽核結果通知】",
+                        `簽核主管：${currentUser.name}（第${stage}階${actionLabel}）`,
+                        `申請同仁：${applicantName}`,
+                        `廠區：${factory}廠`,
+                        `地點/行程：${route} (${days}天)`,
+                        `最新狀態：${nextStatus}`,
+                        `備註：${note}`
+                    ].join("
+");
+
+                    if (confirm("是否立即開啟 WhatsApp 傳送本次簽核結果通知？")) {
+                        openWhatsAppMessage("", waText);
+                    }
+                }
+
                 setTimeout(loadTripRecords, 1500);
             });
         }
@@ -512,19 +559,27 @@
                         else if (status.includes('駁回')) badgeClass = 'bg-rose-100 text-rose-700';
                         else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
 
+                        const safeTripId = String(tripId).replace(/'/g, "\\'");
+                        const safeEmpId = String(empId).replace(/'/g, "\\'");
+                        const safeEmpName = String(empName).replace(/'/g, "\\'");
+                        const safeFactory = String(factory).replace(/'/g, "\\'");
+                        const safeRoute = String(route).replace(/'/g, "\\'");
+                        const safeDays = String(days).replace(/'/g, "\\'");
+                        const safeStartDate = String(startDate).replace(/'/g, "\\'");
+
                         let actionButtonsHtml = '';
                         if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
                                 </div>
                             `;
                         } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
-                                    <button type="button" onclick="handleReview('${tripId}', '${empId}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                    <button type="button" onclick="handleReview('${safeTripId}', '${safeEmpId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${safeDays}', '${safeStartDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
                                 </div>
                             `;
                         }
