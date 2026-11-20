@@ -88,7 +88,6 @@
                     <label class="block font-bold text-slate-700 mb-1">所屬廠區</label>
                     <div class="flex gap-4">
                         <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台北" checked class="accent-[#00a600]"> 台北</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台中" class="accent-[#00a600]"> 台中</label>
                         <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="factory" value="台南" class="accent-[#00a600]"> 台南</label>
                     </div>
                 </div>
@@ -178,7 +177,7 @@
         // 一階簽核人：ERIC (E020)
         const LEVEL1_MANAGER_IDS = ["E020"];
 
-        // 二階簽核人：北、中為李彥綸 (E001)；南為楊添仰 (E002)；ERIC (E020) 為管理員可代簽二階
+        // 二階簽核人：台北為李彥綸 (E001)；台南為楊添仰 (E002)；ERIC (E020) 為管理員可代簽二階
         function canApproveLevel2(empId, factory) {
             const id = String(empId || "").trim().toUpperCase();
             if (id === "E020") return true;
@@ -230,13 +229,6 @@
                 localStorage.removeItem('king_newton_emp_id');
                 localStorage.removeItem('king_newton_emp_name');
             } catch (e) {}
-        }
-
-        function showLoginModal() {
-            currentUser = { id: "", name: "" };
-            document.getElementById('user-display').innerText = "尚未登入";
-            document.getElementById('user-display-mobile').innerText = "尚未登入";
-            document.getElementById('auth-banner').style.display = 'block';
         }
 
         function applyUserSession(empId, empName) {
@@ -485,11 +477,11 @@
             const text = String(rawText || "").trim();
             if (!text) return { empId: "", empName: "" };
 
-            const idMatch = text.match(/\b(E\d{2,4})\b/i);
+            const idMatch = text.match(/(E\d{2,4})/i);
             const foundId = idMatch ? idMatch[1].toUpperCase() : resolveEmpIdFromName(text);
 
             let cleanedName = text
-                .replace(/\b(E\d{2,4})\b/ig, "")
+                .replace(/(E\d{2,4})/ig, "")
                 .replace(/[\(\)\-\/\:\|，,]/g, " ")
                 .trim();
 
@@ -588,7 +580,7 @@
                 }
 
                 if (!foundId && (keyStr.includes("id") || keyStr.includes("emp") || keyStr.includes("user") || keyStr.includes("account") || keyStr.includes("login"))) {
-                    const idMatch = valStr.match(/\b(E\d{2,4})\b/i);
+                    const idMatch = valStr.match(/(E\d{2,4})/i);
                     if (idMatch) {
                         foundId = idMatch[1].toUpperCase();
                     } else if (/^E\d{2,4}$/i.test(valStr)) {
@@ -780,7 +772,8 @@
                     `期間：${payload.startDate} ~ ${payload.endDate}（${payload.days} 天）`,
                     `事由：${payload.reason}`,
                     "請至金牛頓系統進行一階簽核。"
-                ].join("\n");
+                ].join("
+");
 
                 if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
                     openWhatsAppMessage("ERIC", waText);
@@ -837,7 +830,8 @@
                 if (stage === 1 && decision === 'approve') {
                     const defaultChoice = (String(factory || "").trim() === "台南" || String(factory || "").trim() === "南") ? "2" : "1";
                     const targetManager = prompt(
-                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北/台中) 或 2 (楊添仰-台南)",
+                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？
+請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)",
                         defaultChoice
                     );
 
@@ -853,7 +847,8 @@
                             `廠區：${factory}廠`,
                             `地點/行程：${route} (${days}天)`,
                             `請 ${nextManagerName} 主管至系統進行二階最終核准。`
-                        ].join("\n");
+                        ].join("
+");
 
                         openWhatsAppMessage(nextManagerName, waText);
                     }
@@ -866,7 +861,8 @@
                         `地點/行程：${route} (${days}天)`,
                         `最新狀態：${nextStatus}`,
                         `備註：${note}`
-                    ].join("\n");
+                    ].join("
+");
 
                     if (confirm("是否立即開啟 WhatsApp 傳送本次簽核結果通知？")) {
                         openWhatsAppMessage("", waText);
@@ -923,13 +919,13 @@
                         else if (status.includes('駁回')) badgeClass = 'bg-rose-100 text-rose-700';
                         else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
 
-                        const safeTripId = String(tripId).replace(/'/g, "\\'");
-                        const safeEmpId = String(empId).replace(/'/g, "\\'");
-                        const safeEmpName = String(empName).replace(/'/g, "\\'");
-                        const safeFactory = String(factory).replace(/'/g, "\\'");
-                        const safeRoute = String(route).replace(/'/g, "\\'");
-                        const safeDays = String(days).replace(/'/g, "\\'");
-                        const safeStartDate = String(startDate).replace(/'/g, "\\'");
+                        const safeTripId = String(tripId).replace(/'/g, "\'");
+                        const safeEmpId = String(empId).replace(/'/g, "\'");
+                        const safeEmpName = String(empName).replace(/'/g, "\'");
+                        const safeFactory = String(factory).replace(/'/g, "\'");
+                        const safeRoute = String(route).replace(/'/g, "\'");
+                        const safeDays = String(days).replace(/'/g, "\'");
+                        const safeStartDate = String(startDate).replace(/'/g, "\'");
 
                         let actionButtonsHtml = '';
                         if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
