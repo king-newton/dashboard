@@ -26,7 +26,6 @@
 </head>
 <body class="pb-12">
 
-    <!-- 驗證彈窗 -->
     <div id="auth-modal">
         <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl border border-slate-100 text-center space-y-4">
             <div class="w-14 h-14 bg-emerald-100 text-[#00a600] rounded-2xl flex items-center justify-center mx-auto text-xl shadow-sm">
@@ -51,7 +50,6 @@
         </div>
     </div>
 
-    <!-- 頂部標頭 -->
     <header class="bg-[#00a600] text-white px-3 sm:px-4 py-2.5 shadow-md flex items-center justify-between sticky top-0 z-40 gap-2">
         <div id="logout-trigger" class="flex items-center gap-2 min-w-0 cursor-pointer select-none" title="長按 2 秒可清除登入狀態重新驗證">
             <img src="https://king-newton.github.io/dashboard/icon-standard.png" class="h-6 w-auto rounded bg-white/20 p-0.5 shrink-0">
@@ -85,7 +83,6 @@
             <button type="button" onclick="switchTab('review')" id="tab-review" class="tab-btn flex-1 py-2 rounded-lg transition cursor-pointer">簽核與審核紀錄</button>
         </div>
 
-        <!-- 區塊一：填寫出差單 -->
         <section id="sec-apply" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
             <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
                 <i class="fa-solid fa-paper-plane text-[#00a600]"></i> 新增出差申請
@@ -145,12 +142,40 @@
                         <label class="block font-bold text-slate-700 mb-1">第一職務代理人</label>
                         <select id="proxy1" required class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
                             <option value="">請選擇同仁</option>
+                            <option value="李彥綸">李彥綸 (E001)</option>
+                            <option value="楊添仰">楊添仰 (E002)</option>
+                            <option value="陳品鈞">陳品鈞 (E003)</option>
+                            <option value="陳秀燕">陳秀燕 (E005)</option>
+                            <option value="高欣宜">高欣宜 (E006)</option>
+                            <option value="余品橋">余品橋 (E011)</option>
+                            <option value="陳慧真">陳慧真 (E012)</option>
+                            <option value="ERIC">ERIC (E020)</option>
+                            <option value="陳靖昂">陳靖昂 (E023)</option>
+                            <option value="何成偉">何成偉 (E026)</option>
+                            <option value="李佩娟">李佩娟 (E029)</option>
+                            <option value="曾晨杰">曾晨杰 (E033)</option>
+                            <option value="戴政宏">戴政宏 (E035)</option>
+                            <option value="詹淑敏">詹淑敏 (E036)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block font-bold text-slate-700 mb-1">第二職務代理人 (超過3天)</label>
                         <select id="proxy2" class="w-full border border-slate-300 rounded-lg p-2 outline-none focus:border-[#00a600]">
                             <option value="">無</option>
+                            <option value="李彥綸">李彥綸 (E001)</option>
+                            <option value="楊添仰">楊添仰 (E002)</option>
+                            <option value="陳品鈞">陳品鈞 (E003)</option>
+                            <option value="陳秀燕">陳秀燕 (E005)</option>
+                            <option value="高欣宜">高欣宜 (E006)</option>
+                            <option value="余品橋">余品橋 (E011)</option>
+                            <option value="陳慧真">陳慧真 (E012)</option>
+                            <option value="ERIC">ERIC (E020)</option>
+                            <option value="陳靖昂">陳靖昂 (E023)</option>
+                            <option value="何成偉">何成偉 (E026)</option>
+                            <option value="李佩娟">李佩娟 (E029)</option>
+                            <option value="曾晨杰">曾晨杰 (E033)</option>
+                            <option value="戴政宏">戴政宏 (E035)</option>
+                            <option value="詹淑敏">詹淑敏 (E036)</option>
                         </select>
                     </div>
                 </div>
@@ -161,7 +186,6 @@
             </form>
         </section>
 
-        <!-- 區塊二：審核與簽核紀錄 -->
         <section id="sec-review" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4 hidden">
             <h2 class="text-base font-bold text-slate-800 border-b pb-2 flex items-center justify-between">
                 <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-[#00a600]"></i> 審核與簽核紀錄</span>
@@ -179,33 +203,30 @@
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTS3PsYZxik44YUGnLxtfS9UsdlK-6P_EHrcHjONLoEqsD2sENhXyvQLGaEGzMfZAxZQ/exec";
         const CSV_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsSgTxCHRQ0C1bGVPDauhJYlxqurA4ZTa34QQhG3Moh83AxU4zpr_QD4pX9VG6q6Hkj8M9T8j_hqc1/pub?gid=1209137580&single=true&output=csv";
 
-        // 主管層級定義 (完全對齊試算表設定)
-        const LEVEL1_MANAGER_IDS = ["E020"]; // 一階主管：ERIC
-        const LEVEL2_MANAGER_IDS = ["E001", "E002"]; // 二階主管：李彥綸 (北區)、楊添仰 (南區)
+        const LEVEL1_MANAGER_IDS = ["E020"];
+        const LEVEL2_MANAGER_IDS = ["E001", "E002"];
 
-        // WhatsApp 主管電話（留空預設直接跳轉開啟 WhatsApp 文字頁面）
         const MANAGER_PHONES = {
             "ERIC": "",
             "李彥綸": "",
             "楊添仰": ""
         };
 
-        // 同仁與廠區資料表（完全對齊 員工請假流程 試算表）
         const EMPLOYEE_LIST = [
-            { id: "E001", name: "李彥綸", area: "北" },
-            { id: "E002", name: "楊添仰", area: "南" },
-            { id: "E003", name: "陳品鈞", area: "北" },
-            { id: "E005", name: "陳秀燕", area: "北" },
-            { id: "E006", name: "高欣宜", area: "北" },
-            { id: "E011", name: "余品橋", area: "南" },
-            { id: "E012", name: "陳慧真", area: "南" },
-            { id: "E020", name: "ERIC", area: "北" },
-            { id: "E023", name: "陳靖昂", area: "北" },
-            { id: "E026", name: "何成偉", area: "北" },
-            { id: "E029", name: "李佩娟", area: "南" },
-            { id: "E033", name: "曾晨杰", area: "南" },
-            { id: "E035", name: "戴政宏", area: "南" },
-            { id: "E036", name: "詹淑敏", area: "北" }
+            { id: "E001", name: "李彥綸" },
+            { id: "E002", name: "楊添仰" },
+            { id: "E003", name: "陳品鈞" },
+            { id: "E005", name: "陳秀燕" },
+            { id: "E006", name: "高欣宜" },
+            { id: "E011", name: "余品橋" },
+            { id: "E012", name: "陳慧真" },
+            { id: "E020", name: "ERIC" },
+            { id: "E023", name: "陳靖昂" },
+            { id: "E026", name: "何成偉" },
+            { id: "E029", name: "李佩娟" },
+            { id: "E033", name: "曾晨杰" },
+            { id: "E035", name: "戴政宏" },
+            { id: "E036", name: "詹淑敏" }
         ];
 
         let currentUser = { id: "", name: "" };
@@ -349,9 +370,6 @@
             }
         }
 
-        // ==========================================
-        // 送出出差單 & WhatsApp 通知一階主管 ERIC (比照請假單)
-        // ==========================================
         function submitTrip(e) {
             e.preventDefault();
             if (!currentUser.id || !currentUser.name) {
@@ -399,7 +417,6 @@
             }).then(() => {
                 alert("🎉 出差單已成功送出！");
 
-                // 比照請假單通知一階主管 ERIC
                 const waText = encodeURIComponent(
                     `【出差審核通知】\n` +
                     `同仁：${empName}\n` +
@@ -411,8 +428,8 @@
 
                 const ericPhone = MANAGER_PHONES["ERIC"] || "";
                 if (confirm("是否立即開啟 WhatsApp 發送訊息通知一階主管 ERIC？")) {
-                    const waUrl = ericPhone 
-                        ? `https://wa.me/${ericPhone}?text=${waText}` 
+                    const waUrl = ericPhone
+                        ? `https://wa.me/${ericPhone}?text=${waText}`
                         : `https://api.whatsapp.com/send?text=${waText}`;
                     window.open(waUrl, '_blank');
                 }
@@ -432,10 +449,7 @@
             });
         }
 
-        // ==========================================
-        // 主管簽核 & WhatsApp 通知二階主管 (比照請假單)
-        // ==========================================
-        function handleReview(empId, applicantName, factory, route, days, startDate, stage, decision) {
+        function handleReview(empId, applicantName, route, days, startDate, stage, decision) {
             const actionLabel = decision === 'approve' ? '核准' : '駁回';
             const note = prompt(`【第${stage}階簽核】確定要將此出差單設為【${actionLabel}】嗎？請輸入備註：`, decision === 'approve' ? '同意' : '退回修正');
             if (note === null) return;
@@ -467,15 +481,10 @@
             }).then(() => {
                 alert(`✅ 第${stage}階簽核完成，目前狀態：${nextStatus}`);
 
-                // 一階核准後 -> 選擇並通知二階主管
                 if (stage === 1 && decision === 'approve') {
-                    // 自動判斷預設選項：南區預設提示 2 (楊添仰)，台北/台中預設提示 1 (李彥綸)
-                    const isSouth = (factory === '台南');
-                    const defaultChoice = isSouth ? "2" : "1";
-
                     const targetManager = prompt(
-                        `一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)`,
-                        defaultChoice
+                        "一階簽核成功！請問要透過 WhatsApp 通知哪位二階主管？\n請輸入：1 (李彥綸-台北) 或 2 (楊添仰-台南)",
+                        "1"
                     );
 
                     let nextManagerName = "";
@@ -492,8 +501,8 @@
                         );
 
                         const nextPhone = MANAGER_PHONES[nextManagerName] || "";
-                        const waUrl = nextPhone 
-                            ? `https://wa.me/${nextPhone}?text=${waText}` 
+                        const waUrl = nextPhone
+                            ? `https://wa.me/${nextPhone}?text=${waText}`
                             : `https://api.whatsapp.com/send?text=${waText}`;
                         window.open(waUrl, '_blank');
                     }
@@ -527,9 +536,6 @@
             return result;
         }
 
-        // ==========================================
-        // 載入與呈現出差審核紀錄 (修正資料解析相容性)
-        // ==========================================
         function loadTripRecords() {
             const listDiv = document.getElementById('recordList');
             listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">資料讀取中...</div>';
@@ -555,29 +561,38 @@
 
                     const isLevel1 = LEVEL1_MANAGER_IDS.includes(currentUser.id);
                     const isLevel2 = LEVEL2_MANAGER_IDS.includes(currentUser.id);
-                    const dataRows = lines.slice(1).map(parseCSVRow).filter(r => r.some(c => c !== '')).reverse();
+
+                    const parsedRows = lines.slice(1).map(parseCSVRow).filter(r => r.some(c => c !== ''));
+                    if (parsedRows.length === 0) {
+                        listDiv.innerHTML = '<div class="text-center text-slate-400 py-6">尚無任何出差紀錄</div>';
+                        return;
+                    }
+
+                    // 動態尋找關鍵欄位索引，避免欄位順序或前置欄位差異造成抓不到資料
+                    const findCol = (col, candidates, fallbackIdx) => {
+                        for (const idx of candidates) {
+                            if (idx >= 0 && idx < col.length && col[idx]) return col[idx];
+                        }
+                        return fallbackIdx >= 0 && fallbackIdx < col.length ? col[fallbackIdx] : '';
+                    };
+
+                    const dataRows = parsedRows.reverse();
 
                     listDiv.innerHTML = dataRows.map(col => {
-                        // 相容判斷：如果第 0 欄是工號 (以 E 開頭)，代表欄位未包含 Timestamp
-                        let offset = 0;
-                        if (col[0] && col[0].toUpperCase().startsWith('E')) {
-                            offset = -1; 
-                        }
-
-                        const empId = col[1 + offset] || '';
-                        const empName = col[2 + offset] || '';
-                        const factory = col[3 + offset] || '';
-                        const startDate = col[4 + offset] || '';
-                        const endDate = col[5 + offset] || '';
-                        const days = col[6 + offset] || '';
-                        const route = col[7 + offset] || '';
-                        const reason = col[8 + offset] || '';
-                        const transport = col[9 + offset] || '';
-                        const expense = col[10 + offset] || '無';
-                        const proxy1 = col[11 + offset] || '';
-                        const proxy2 = col[12 + offset] || '無';
-                        const status = col[13 + offset] || '待一階簽核';
-                        const note = col[14 + offset] || '';
+                        const empId = findCol(col, [1, 0], 1);
+                        const empName = findCol(col, [2, 1], 2);
+                        const factory = findCol(col, [3, 2], 3);
+                        const startDate = findCol(col, [4, 3], 4);
+                        const endDate = findCol(col, [5, 4], 5);
+                        const days = findCol(col, [6, 5], 6);
+                        const route = findCol(col, [7, 6], 7);
+                        const reason = findCol(col, [8, 7], 8);
+                        const transport = findCol(col, [9, 8], 9);
+                        const expense = findCol(col, [10, 9], 10) || '無';
+                        const proxy1 = findCol(col, [11, 10], 11);
+                        const proxy2 = findCol(col, [12, 11], 12) || '無';
+                        const status = findCol(col, [13, 12], 13) || '待一階簽核';
+                        const note = findCol(col, [14, 13], 14);
 
                         let badgeClass = 'bg-amber-100 text-amber-700';
                         if (status.includes('核准')) badgeClass = 'bg-emerald-100 text-emerald-700';
@@ -585,22 +600,21 @@
                         else if (status.includes('二階') || status === '審核中') badgeClass = 'bg-sky-100 text-sky-700';
 
                         const safeEmpName = empName.replace(/'/g, "\\'");
-                        const safeFactory = factory.replace(/'/g, "\\'");
                         const safeRoute = route.replace(/'/g, "\\'");
 
                         let actionButtonsHtml = '';
                         if (isLevel1 && (status === '待一階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${days}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${days}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 1, 'approve')" class="flex-1 bg-[#00a600] text-white py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 cursor-pointer">一階核准</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 1, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">一階駁回</button>
                                 </div>
                             `;
                         } else if (isLevel2 && (status === '待二階簽核' || status === '審核中')) {
                             actionButtonsHtml = `
                                 <div class="flex gap-2 pt-2 border-t">
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${days}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
-                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeFactory}', '${safeRoute}', '${days}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 2, 'approve')" class="flex-1 bg-blue-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-blue-700 cursor-pointer">二階核准</button>
+                                    <button type="button" onclick="handleReview('${empId}', '${safeEmpName}', '${safeRoute}', '${days}', '${startDate}', 2, 'reject')" class="flex-1 bg-rose-600 text-white py-1.5 rounded-lg font-bold text-xs hover:bg-rose-700 cursor-pointer">二階駁回</button>
                                 </div>
                             `;
                         }
