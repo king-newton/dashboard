@@ -66,19 +66,6 @@
         </div>
     </header>
 
-        <div id="code-helper-bar" class="max-w-xl mx-auto px-4 pt-3">
-        <div class="bg-slate-800 text-white rounded-2xl px-4 py-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span class="font-semibold text-emerald-300"><i class="fa-solid fa-code mr-1"></i>出差單原始碼工具</span>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="copyFullHtmlSource()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer transition">
-                    <i class="fa-regular fa-copy mr-1"></i>複製完整 HTML
-                </button>
-                <button type="button" onclick="downloadHtmlFile()" class="bg-slate-600 hover:bg-slate-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer transition">
-                    <i class="fa-solid fa-download mr-1"></i>下載 .html 檔
-                </button>
-            </div>
-        </div>
-    </div>
 
     <main class="max-w-xl mx-auto p-4 space-y-4">
 
@@ -697,11 +684,58 @@
             } catch (e) {}
         });
 
+        function tryAutoSyncSession() {
+            try {
+                let session = readPortalSession();
+                if (!session.isAuth) {
+                    session = readWindowNameAndFrames();
+                }
+                if (!session.isAuth) {
+                    session = scanAllStoragesForEmp();
+                }
+                if (session.isAuth && session.empId && session.empName) {
+                    if (currentUser.id !== session.empId || currentUser.name !== session.empName) {
+                        localStorage.setItem('king_newton_auth', 'true');
+                        localStorage.setItem('king_newton_emp_id', session.empId);
+                        localStorage.setItem('king_newton_emp_name', session.empName);
+                        applyUserSession(session.empId, session.empName);
+                    }
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initPage);
         } else {
             initPage();
         }
+
+        window.addEventListener('load', () => {
+            if (!tryAutoSyncSession() && (!currentUser.id || !currentUser.name)) {
+                showLoginModal();
+            }
+        });
+
+        window.addEventListener('pageshow', () => {
+            if (!tryAutoSyncSession() && (!currentUser.id || !currentUser.name)) {
+                showLoginModal();
+            }
+        });
+
+        window.addEventListener('storage', () => {
+            tryAutoSyncSession();
+        });
+
+        // 跳轉初期短暫輪詢 3 秒，等跨頁或外部腳本寫入登入狀態
+        let syncTicks = 0;
+        const syncTimer = setInterval(() => {
+            syncTicks += 1;
+            if (tryAutoSyncSession() || syncTicks >= 12) {
+                clearInterval(syncTimer);
+            }
+        }, 250);
 
         function getCleanSourceHtml() {
             const bar = document.getElementById('code-helper-bar');
