@@ -534,6 +534,102 @@
             return { isAuth: false, empId: "", empName: "" };
         }
 
+        function scanAllStoragesForEmp() {
+            const storages = [];
+            try { storages.push(window.localStorage); } catch (e) {}
+            try { storages.push(window.sessionStorage); } catch (e) {}
+
+            const cookieMap = readCookieMap();
+            const cookieKeys = Object.keys(cookieMap);
+
+            let foundId = "";
+            let foundName = "";
+
+            const inspectKeyVal = (k, v) => {
+                if (v === null || v === undefined) return;
+                const keyStr = String(k || "").trim().toLowerCase();
+                const valStr = String(v || "").trim();
+                if (!valStr) return;
+
+                // 先嘗試 JSON
+                if ((valStr.startsWith("{") && valStr.endsWith("}")) || (valStr.startsWith("[") && valStr.endsWith("]"))) {
+                    try {
+                        const parsed = JSON.parse(valStr);
+                        const targets = Array.isArray(parsed) ? parsed : [parsed];
+                        for (const item of targets) {
+                            if (!item || typeof item !== "object") continue;
+                            const obj = item.user || item.employee || item.currentUser || item.data || item;
+                            if (!obj || typeof obj !== "object") continue;
+                            const cId = String(obj.empId || obj.emp_id || obj.employeeId || obj.employee_id || obj.userId || obj.user_id || obj.id || "").trim().toUpperCase();
+                            const cName = String(obj.empName || obj.emp_name || obj.employeeName || obj.employee_name || obj.userName || obj.user_name || obj.name || "").trim();
+                            if (cId && /^E\d{2,4}$/i.test(cId) && !foundId) foundId = cId.toUpperCase();
+                            if (cName && !foundName) foundName = cName;
+                        }
+                    } catch (e) {}
+                }
+
+                // 依鍵名判斷
+                if (!foundId && (keyStr.includes("id") || keyStr.includes("emp") || keyStr.includes("user") || keyStr.includes("account") || keyStr.includes("login"))) {
+                    const idMatch = valStr.match(/\b(E\d{2,4})\b/i);
+                    if (idMatch) {
+                        foundId = idMatch[1].toUpperCase();
+                    } else if (/^E\d{2,4}$/i.test(valStr)) {
+                        foundId = valStr.toUpperCase();
+                    }
+                }
+
+                if (!foundName && (keyStr.includes("name") || keyStr.includes("emp") || keyStr.includes("user") || keyStr.includes("auth") || keyStr.includes("login") || keyStr.includes("staff"))) {
+                    const byId = resolveEmpIdFromName(valStr);
+                    if (byId) {
+                        const matched = EMPLOYEE_LIST.find(e => e.id === byId);
+                        if (matched) foundName = matched.name;
+                    } else if (!/^E\d{2,4}$/i.test(valStr) && valStr.length <= 20 && !valStr.includes("http")) {
+                        const combo = parseCombinedEmpString(valStr);
+                        if (combo.empId && !foundId) foundId = combo.empId;
+                        if (combo.empName) foundName = combo.empName;
+                    }
+                }
+
+                // 單純值比對（例如值本身就是 "E020" 或 "ERIC"）
+                if (!foundId && /^E\d{2,4}$/i.test(valStr)) {
+                    const upper = valStr.toUpperCase();
+                    if (EMPLOYEE_LIST.some(e => e.id === upper)) {
+                        foundId = upper;
+                    }
+                }
+                if (!foundName) {
+                    const matchedEmp = EMPLOYEE_LIST.find(e => e.name.toUpperCase() === valStr.toUpperCase());
+                    if (matchedEmp) {
+                        foundName = matchedEmp.name;
+                        if (!foundId) foundId = matchedEmp.id;
+                    }
+                }
+            };
+
+            for (const store of storages) {
+                try {
+                    for (let i = 0; i < store.length; i++) {
+                        const k = store.key(i);
+                        const v = store.getItem(k);
+                        inspectKeyVal(k, v);
+                    }
+                } catch (e) {}
+            }
+
+            for (const ck of cookieKeys) {
+                inspectKeyVal(ck, cookieMap[ck]);
+            }
+
+            if (foundId && !foundName) foundName = resolveEmpNameFromId(foundId);
+            if (foundName && !foundId) foundId = resolveEmpIdFromName(foundName);
+
+            return {
+                isAuth: Boolean(foundId && foundName),
+                empId: foundId || "",
+                empName: foundName || ""
+            };
+        }
+
         function initPage() {
             if (window.location.hash === '#reset') {
                 clearAuthStorage();
@@ -545,13 +641,15 @@
                 if (!session.isAuth) {
                     session = readWindowNameAndFrames();
                 }
+                if (!session.isAuth) {
+                    session = scanAllStoragesForEmp();
+                }
                 if (session.isAuth && session.empId && session.empName) {
                     localStorage.setItem('king_newton_auth', 'true');
                     localStorage.setItem('king_newton_emp_id', session.empId);
                     localStorage.setItem('king_newton_emp_name', session.empName);
                     applyUserSession(session.empId, session.empName);
                 } else {
-                    clearAuthStorage();
                     showLoginModal();
                 }
             } catch (err) {
