@@ -67,17 +67,17 @@
             display: flex;
             align-items: center;
             justify-content: space-around;
-            padding: 0 8px;
+            padding: 0 6px;
         }
 
         .app-box {
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 17px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.08);
         }
 
@@ -92,6 +92,22 @@
             align-items: center;
             justify-content: center;
             padding: 16px;
+        }
+
+        /* 📝 工作日誌浮動視窗 Modal */
+        #worklog-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(5px);
+            z-index: 110;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #worklog-modal.show {
+            display: flex;
         }
     </style>
 </head>
@@ -144,12 +160,68 @@
 
     <!-- 3. 中間嵌入整頁行事曆 -->
     <main id="middle-container">
-        <iframe src="https://king-newton.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-full border-0"></iframe>
+        <iframe id="calendar-iframe" src="https://king-newton.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-full border-0"></iframe>
     </main>
+
+    <!-- 📝 工作日誌浮動輸入視窗 -->
+    <div id="worklog-modal" role="dialog" aria-modal="true" aria-labelledby="worklog-title">
+        <div class="bg-white rounded-3xl p-5 md:p-6 w-full max-w-md shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 id="worklog-title" class="text-base font-extrabold text-slate-800 m-0 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-orange-500"></i>
+                    填寫工作日誌 / 拜訪客戶日誌
+                </h3>
+                <button type="button" onclick="closeWorklogModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none cursor-pointer bg-transparent border-0">&times;</button>
+            </div>
+
+            <form id="worklog-form" onsubmit="submitWorklog(event)" class="space-y-3 text-left">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="wl-date" class="block text-xs font-bold text-slate-600 mb-1">日期 *</label>
+                        <input type="date" id="wl-date" required class="w-full bg-slate-50 border border-slate-200 text-sm py-2 px-3 rounded-xl outline-none focus:border-orange-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label for="wl-category" class="block text-xs font-bold text-slate-600 mb-1">項目 *</label>
+                        <select id="wl-category" required class="w-full bg-slate-50 border border-slate-200 text-sm py-2 px-3 rounded-xl outline-none focus:border-orange-500 focus:bg-white transition">
+                            <option value="工作日誌">工作日誌</option>
+                            <option value="拜訪客戶日誌">拜訪客戶日誌</option>
+                            <option value="業務開發">業務開發</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="wl-content" class="block text-xs font-bold text-slate-600 mb-1">工作日誌內容 *</label>
+                    <textarea id="wl-content" rows="4" required placeholder="請輸入今日工作重點、拜訪客戶對象、洽談內容或後續追蹤..." class="w-full bg-slate-50 border border-slate-200 text-sm py-2 px-3 rounded-xl outline-none focus:border-orange-500 focus:bg-white transition resize-y"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="wl-emp-id" class="block text-xs font-bold text-slate-600 mb-1">工號 *</label>
+                        <input type="text" id="wl-emp-id" required readonly class="w-full bg-slate-100 border border-slate-200 text-sm py-2 px-3 rounded-xl text-slate-700 font-semibold outline-none">
+                    </div>
+                    <div>
+                        <label for="wl-emp-name" class="block text-xs font-bold text-slate-600 mb-1">姓名 *</label>
+                        <input type="text" id="wl-emp-name" required readonly class="w-full bg-slate-100 border border-slate-200 text-sm py-2 px-3 rounded-xl text-slate-700 font-semibold outline-none">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeWorklogModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer border-0">
+                        取消
+                    </button>
+                    <button type="submit" id="wl-submit-btn" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/30 transition cursor-pointer border-0">
+                        送出寫入
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- 4. 底部固定 Dock 快捷列 -->
     <nav id="dock-bar">
-        <div class="flex items-center justify-around w-full max-w-xl">
+        <div class="flex items-center justify-around w-full max-w-2xl">
             <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                 <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
                     <i class="fa-solid fa-location-dot"></i>
@@ -168,6 +240,12 @@
                 </div>
                 <span class="text-[10px] text-slate-700 font-semibold mt-0.5">出差單</span>
             </a>
+            <button type="button" onclick="openWorklogModal()" class="flex flex-col items-center justify-center bg-transparent border-0 p-0 cursor-pointer group">
+                <div class="app-box bg-gradient-to-br from-orange-400 to-amber-600 text-white">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">工作日誌</span>
+            </button>
             <a href="https://king-newton.github.io/dashboard/industry_news.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
                 <div class="app-box bg-gradient-to-br from-sky-500 to-blue-700 text-white">
                     <i class="fa-solid fa-building"></i>
@@ -184,6 +262,8 @@
     </nav>
 
     <script>
+        const WORKLOG_GAS_API_URL = "https://script.google.com/macros/s/AKfycbyf5ysSbBQEXvUAVIBoGyj4XqCtNDV9qeMZtJNXYBTiwfsn-3ju2bLWHq1CyzyAC2jcQg/exec";
+
         // 內建員工工號與姓名對照表
         const EMPLOYEE_LIST = [
             { id: "E001", name: "李彥綸" },
@@ -202,11 +282,85 @@
             { id: "E036", name: "詹淑敏" }
         ];
 
+        // 取得今日 YYYY-MM-DD
+        function getTodayDateString() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        // 自動帶入已登入者資訊
+        function fillLoggedInEmployee() {
+            const empId = localStorage.getItem('king_newton_emp_id') || '';
+            const empName = localStorage.getItem('king_newton_emp_name') || '';
+            document.getElementById('wl-emp-id').value = empId;
+            document.getElementById('wl-emp-name').value = empName;
+        }
+
+        // 開啟工作日誌浮動視窗
+        function openWorklogModal() {
+            const isAuth = localStorage.getItem('king_newton_auth');
+            if (isAuth !== 'true') {
+                document.getElementById('auth-modal').style.display = 'flex';
+                return;
+            }
+            const dateInput = document.getElementById('wl-date');
+            if (!dateInput.value) {
+                dateInput.value = getTodayDateString();
+            }
+            fillLoggedInEmployee();
+            document.getElementById('worklog-modal').classList.add('show');
+        }
+
+        // 關閉工作日誌浮動視窗
+        function closeWorklogModal() {
+            document.getElementById('worklog-modal').classList.remove('show');
+        }
+
+        // 送出工作日誌寫入 Google Sheet
+        async function submitWorklog(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('wl-submit-btn');
+            const payload = {
+                action: 'addWorklog',
+                date: document.getElementById('wl-date').value.trim(),
+                category: document.getElementById('wl-category').value.trim(),
+                content: document.getElementById('wl-content').value.trim(),
+                empId: document.getElementById('wl-emp-id').value.trim(),
+                empName: document.getElementById('wl-emp-name').value.trim()
+            };
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = '寫入中...';
+
+            try {
+                await fetch(WORKLOG_GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                alert('工作日誌已寫入 Google Sheet！');
+                document.getElementById('wl-content').value = '';
+                closeWorklogModal();
+                const iframe = document.getElementById('calendar-iframe');
+                if (iframe && iframe.src) {
+                    iframe.src = iframe.src;
+                }
+            } catch (err) {
+                console.error('寫入工作日誌失敗', err);
+                alert('寫入時發生錯誤，請稍後再試。');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = '送出寫入';
+            }
+        }
+
         // 初始化檢查登入狀態
         function checkAuthStatus() {
             const isAuth = localStorage.getItem('king_newton_auth');
             if (isAuth === 'true') {
                 document.getElementById('auth-modal').style.display = 'none';
+                fillLoggedInEmployee();
             }
         }
 
@@ -230,6 +384,7 @@
                 localStorage.setItem('king_newton_auth', 'true');
                 localStorage.setItem('king_newton_emp_id', matchedEmp.id);
                 localStorage.setItem('king_newton_emp_name', matchedEmp.name);
+                fillLoggedInEmployee();
                 document.getElementById('auth-modal').style.display = 'none';
             } else {
                 msgDiv.innerText = "❌ 工號與姓名不符，請重新輸入！";
