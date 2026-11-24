@@ -1,274 +1,440 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>金牛頓企業管理入口網 | 公司活動行事曆</title>
-    <!-- 網頁瀏覽器分頁小圖示 (Favicon) -->
-    <link rel="icon" type="image/png" href="https://king-newton.github.io/dashboard/icon-standard.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>行動戰情 - 金牛頓工業</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden; /* 鎖定全螢幕，防止頁面整體滾動 */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f0f4f8;
-            color: #334155;
-            -webkit-tap-highlight-color: transparent;
+        :root {
+            --bg-gradient: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-blue: #38bdf8;
+            --text-white: #f8fafc;
+            --text-dim: #94a3b8;
+            --up-green: #4ade80;
+            --down-red: #fb7185;
+            --btn-bg: rgba(56, 189, 248, 0.1);
         }
 
-        /* 🌟 頂部固定區塊：改為 space-side，讓 LOGO 靠左、EXIT 靠右，絕不重疊 */
-        #top-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background-color: #00a600;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 12px rgba(0, 166, 0, 0.2);
-            z-index: 50;
-            padding: 0 16px;
-            user-select: none;
-            -webkit-user-select: none;
+        body { margin: 0; padding: 0; background: var(--bg-gradient); background-attachment: fixed; color: var(--text-white); font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; min-height: 100vh; }
+
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #020617; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #auth-input {
+            border: none; border-bottom: 2px solid var(--accent-blue); width: 200px;
+            font-size: 24px; text-align: center; outline: none; padding: 10px;
+            background: transparent; color: white; letter-spacing: 5px;
         }
 
-        /* 🌟 中間整頁行事曆嵌入區塊 */
-        #middle-container {
-            position: absolute;
-            top: 60px;
-            bottom: 74px;
-            left: 0;
-            right: 0;
-            background: #ffffff;
+        .container { padding: 15px; max-width: 800px; margin: auto; }
+
+        header { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 1.5rem; font-weight: bold; margin: 0; color: var(--accent-blue); }
+        .time-badge { background: var(--btn-bg); color: var(--accent-blue); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; border: 1px solid rgba(56,189,248,0.3); }
+
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .full-width { grid-column: span 2; }
+
+        .card {
+            background: var(--card-bg); padding: 15px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column; justify-content: center; min-height: 100px;
+        }
+
+        .card-label { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px; }
+        .card-value { font-size: 1.5rem; font-weight: 800; font-family: 'Consolas', monospace; white-space: nowrap; }
+        .card-footer { font-size: 0.7rem; color: var(--text-dim); margin-top: 6px; }
+
+        .target-input {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+            color: var(--accent-blue); padding: 4px 8px; border-radius: 6px; font-size: 1rem; width: 110px; text-align: right;
+        }
+
+        .ratio-bar {
+            margin-top: 15px; background: rgba(56, 189, 248, 0.08); 
+            padding: 15px; border-radius: 12px; border: 1px solid rgba(56,189,248,0.2);
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+        }
+        .ratio-item { display: flex; flex-direction: column; align-items: center; border-right: 1px solid rgba(255,255,255,0.1); }
+        .ratio-item:last-child { border-right: none; }
+        .ratio-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; text-align: center; }
+        .ratio-val { font-size: 1.1rem; font-weight: bold; color: white; }
+
+        /* 捷徑按鈕區樣式 */
+        .shortcut-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px;
+        }
+        .shortcut-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 12px 8px; border-radius: 10px; font-size: 0.9rem; font-weight: bold;
+            text-decoration: none; cursor: pointer; border: 1px solid rgba(56,189,248,0.3);
+            color: var(--text-white); background: var(--card-bg); transition: all 0.2s;
+        }
+        .shortcut-btn:hover { background: var(--btn-bg); border-color: var(--accent-blue); }
+        .btn-calendar { grid-column: span 3; color: var(--accent-blue); background: var(--btn-bg); border-color: var(--accent-blue); }
+
+        /* 浮動彈窗 (Modal) 樣式 */
+        .modal-backdrop {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(4px); z-index: 9999;
+            justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal-box {
+            background: #1e293b; border: 1px solid var(--accent-blue); border-radius: 12px;
+            width: 100%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; color: var(--text-white);
+        }
+        .modal-header {
+            background: rgba(56, 189, 248, 0.15); padding: 12px 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); border-bottom: 1px solid rgba(56,189,248,0.2);
+        }
+        .modal-close { background: transparent; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+        .modal-body { padding: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: white;
+            font-size: 0.95rem; box-sizing: border-box; outline: none;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent-blue); }
+        .form-group textarea { height: 90px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal-footer {
+            padding: 12px 18px; background: rgba(15, 23, 42, 0.8); border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: flex-end; gap: 10px;
+        }
+        .btn-cancel { background: transparent; color: var(--text-dim); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .btn-submit { background: var(--accent-blue); color: #020617; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* 重要事項提醒表格化修正 */
+        .important-notice {
+            margin-top: 20px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 15px;
             overflow: hidden;
         }
+        .notice-header { color: var(--accent-blue); font-weight: bold; font-size: 1.1rem; margin-bottom: 12px; }
+        .notice-table { width: 100%; border-collapse: collapse; }
+        .notice-table th { background: rgba(56, 189, 248, 0.1); text-align: left; padding: 12px 10px; color: var(--accent-blue); font-size: 0.85rem; border-bottom: 2px solid rgba(56, 189, 248, 0.3); }
+        .notice-table td { padding: 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; vertical-align: top; line-height: 1.6; }
+        
+        .item-col { width: 80px; color: var(--accent-blue); font-weight: bold; }
+        .detail-col { color: var(--text-white); }
 
-        /* 🌟 底部固定 Dock 快捷列區塊 */
-        #dock-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 74px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid #e2e8f0;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-            z-index: 50;
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            padding: 0 8px;
-        }
+        footer { text-align: center; padding: 30px 0; font-size: 0.7rem; color: var(--text-dim); opacity: 0.4; }
 
-        .app-box {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-        }
-
-        /* 🔒 身份驗證遮罩 Modal */
-        #auth-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
+        @media screen and (max-width: 480px) {
+            .card-value { font-size: 1.2rem; }
+            .ratio-val { font-size: 0.95rem; }
+            .notice-table td { font-size: 0.82rem; }
+            .item-col { width: 80px; }
+            .shortcut-grid { grid-template-columns: repeat(2, 1fr); }
+            .btn-calendar { grid-column: span 2; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 🔒 1. 身份驗證彈窗遮罩 (雙重確認：工號 + 姓名) -->
-    <div id="auth-modal">
-        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl border border-slate-100 text-center space-y-4">
-            <div class="w-14 h-14 bg-emerald-100 text-[#00a600] rounded-2xl flex items-center justify-center mx-auto text-xl shadow-sm">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            
-            <div>
-                <h2 class="text-lg font-extrabold text-slate-800 m-0">金牛頓公司入口網</h2>
-                <p class="text-xs text-slate-500 mt-1 m-0">請輸入您的工號與姓名進行身份確認</p>
-            </div>
-
-            <form onsubmit="verifyEmp(event)" class="space-y-3">
-                <div>
-                    <input type="text" id="emp-id-input" placeholder="請輸入工號" required autofocus autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
-                </div>
-                <div>
-                    <input type="text" id="emp-name-input" placeholder="請輸入姓名" required autocomplete="off" class="w-full bg-slate-50 border border-slate-200 text-center text-sm py-2.5 px-4 rounded-xl outline-none focus:border-[#00a600] focus:bg-white transition">
-                </div>
-
-                <div id="auth-msg" class="text-xs font-bold text-rose-500 min-h-[16px]"></div>
-
-                <button type="submit" id="verify-btn" class="w-full bg-[#00a600] hover:bg-[#008f00] text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition cursor-pointer text-sm">
-                    確認並登入系統
-                </button>
-            </form>
-        </div>
+    <div id="auth-overlay">
+        <input type="password" id="auth-input" autofocus maxlength="8" placeholder="請輸入密碼">
     </div>
 
-    <!-- 2. 頂部固定 Header (左側 LOGO 靠齊 + 右側 EXIT 按鈕，手機版完美適配) -->
-    <header id="top-header">
-        <!-- 左側 LOGO 區塊（支援長按 2 秒清除登入重設） -->
-        <div id="logout-trigger" class="flex items-center cursor-pointer py-1" title="長按 2 秒可清除登入狀態重新驗證">
-            <div class="flex items-center gap-2">
-                <img src="https://king-newton.github.io/dashboard/icon-standard.png" alt="Icon" class="h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
-                <img src="https://king-newton.github.io/dashboard/logo-standard.png" alt="Logo" class="h-7 w-auto object-contain rounded bg-white/15 p-0.5 shadow-sm">
+    <div class="container">
+        <header>
+            <div class="header-flex">
+                <h1 class="header-title">行動戰情室</h1>
+                <div class="time-badge" id="day-info">第 -- 天</div>
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;" id="update-time">Syncing...</div>
+        </header>
+
+        <div class="grid">
+            <div class="card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="card-label">每月營收目標</span>
+                    <input type="text" id="monthly-target" class="target-input" value="7,500,000" onfocus="this.value=this.value.replace(/,/g,'')" onblur="formatCommas(this); calculateLogic()">
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
+                    <span class="card-footer">年度總目標</span>
+                    <span id="annual-target" style="font-family: 'Consolas'; color: var(--accent-blue); font-size: 0.85rem;">--</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <span class="card-label">目前累積銷貨</span>
+                <div class="card-value" id="total-sales">--</div>
+                <span class="card-footer">未稅總計</span>
+            </div>
+            <div class="card">
+                <span class="card-label" id="diff-label">進度分析</span>
+                <div class="card-value" id="progress-status">--</div>
+                <span class="card-footer">與權重目標差</span>
+            </div>
+
+            <div class="card">
+                <span class="card-label">銷貨利潤合計</span>
+                <div class="card-value status-up" id="total-profit">--</div>
+                <span class="card-footer">扣除成本利潤</span>
+            </div>
+            <div class="card">
+                <span class="card-label">營業費用總計</span>
+                <div class="card-value status-down" id="expense-val">--</div>
+                <span class="card-footer">後台同步數據</span>
             </div>
         </div>
 
-        <!-- 右側 EXIT 登出按鈕 -->
-        <button onclick="logoutSystem()" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm">
-            <i class="fa-solid fa-right-from-bracket"></i> EXIT
-        </button>
-    </header>
-
-    <!-- 3. 中間嵌入整頁行事曆 -->
-    <main id="middle-container">
-        <iframe src="https://king-newton.github.io/company-calendar/" title="公司活動行事曆" class="w-full h-full border-0"></iframe>
-    </main>
-
-    <!-- 4. 底部固定 Dock 快捷列 -->
-    <nav id="dock-bar">
-        <div class="flex items-center justify-around w-full max-w-xl">
-            <a href="https://king-newton.github.io/dashboard/punchinout.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                <div class="app-box bg-gradient-to-br from-green-500 to-emerald-700 text-white">
-                    <i class="fa-solid fa-location-dot"></i>
-                </div>
-                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">出勤打卡</span>
-            </a>
-            <a href="https://king-newton.github.io/dashboard/leave.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                <div class="app-box bg-gradient-to-br from-amber-400 to-yellow-600 text-white">
-                    <i class="fa-solid fa-table"></i>
-                </div>
-                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">請假單</span>
-            </a>
-            <a href="https://king-newton.github.io/dashboard/business_trip.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                <div class="app-box bg-gradient-to-br from-indigo-500 to-purple-700 text-white">
-                    <i class="fa-solid fa-plane-departure"></i>
-                </div>
-                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">出差單</span>
-            </a>
-            <a href="https://king-newton.github.io/dashboard/industry_news.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                <div class="app-box bg-gradient-to-br from-sky-500 to-blue-700 text-white">
-                    <i class="fa-solid fa-building"></i>
-                </div>
-                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">產業情報</span>
-            </a>
-            <a href="https://king-newton.github.io/company-calendar/index.html" target="_blank" class="flex flex-col items-center justify-center text-decoration-none group">
-                <div class="app-box bg-gradient-to-br from-pink-500 to-rose-700 text-white">
-                    <i class="fa-solid fa-calendar-days"></i>
-                </div>
-                <span class="text-[10px] text-slate-700 font-semibold mt-0.5">活動行事曆</span>
-            </a>
+        <div class="ratio-bar">
+            <div class="ratio-item">
+                <span class="ratio-label">年度達成率</span>
+                <span id="rate-achieve" class="ratio-val" style="color:var(--up-green)">--%</span>
+            </div>
+            <div class="ratio-item">
+                <span class="ratio-label">目前毛利率</span>
+                <span id="rate-margin" class="ratio-val">--%</span>
+            </div>
+            <div class="ratio-item">
+                <span class="ratio-label">營業費用率</span>
+                <span id="rate-expense" class="ratio-val">--%</span>
+            </div>
         </div>
-    </nav>
+
+        <!-- 系統捷徑按鈕區 -->
+        <div class="shortcut-grid">
+            <a href="leave.html" target="_blank" class="shortcut-btn">🌴 請假申請</a>
+            <a href="business_trip.html" target="_blank" class="shortcut-btn">✈️ 出差單</a>
+            <button type="button" onclick="openWorklogModal()" class="shortcut-btn">📝 工作日誌</button>
+            <a href="https://king-newton.github.io/company-calendar/" target="_blank" class="shortcut-btn btn-calendar">📅 查看公司行事曆</a>
+        </div>
+
+        <!-- 工作日誌浮動視窗 -->
+        <div id="worklogModal" class="modal-backdrop" role="dialog">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <span>📝 填寫工作日誌</span>
+                    <button type="button" class="modal-close" onclick="closeWorklogModal()">&times;</button>
+                </div>
+                <form id="worklogForm" onsubmit="submitWorklog(event)">
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="wlDate">日期 *</label>
+                                <input type="date" id="wlDate" name="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="wlCategory">項目 *</label>
+                                <select id="wlCategory" name="category" required>
+                                    <option value="工作日誌">工作日誌</option>
+                                    <option value="拜訪客戶日誌">拜訪客戶日誌</option>
+                                    <option value="業務開發">業務開發</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="wlContent">工作日誌內容 *</label>
+                            <textarea id="wlContent" name="content" placeholder="請輸入今日工作重點或拜訪客戶洽談內容..." required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="wlEmpId">工號 *</label>
+                                <input type="text" id="wlEmpId" name="empId" placeholder="例如：E020" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="wlEmpName">姓名 *</label>
+                                <input type="text" id="wlEmpName" name="empName" placeholder="請輸入姓名" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" onclick="closeWorklogModal()">取消</button>
+                        <button type="submit" id="wlSubmitBtn" class="btn-submit">送出日誌</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="important-notice">
+            <div class="notice-header">重要事項提醒</div>
+            <table class="notice-table">
+                <thead>
+                    <tr>
+                        <th class="item-col">項目</th>
+                        <th class="detail-col">內容詳情</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="item-col">展覽</td>
+                        <td class="detail-col">提醒2026台北國際塑橡膠工業展<br><span style="color:var(--accent-blue); font-family:Consolas; font-weight:bold;">2026/09/15 開始 - 2026/09/18</span></td>
+                    </tr>
+                    <tr>
+                        <td class="item-col">專案</td>
+                        <td class="detail-col">產品型錄、LOGO、形象設計</td>
+                    </tr>
+                    <tr>
+                        <td class="item-col">產品</td>
+                        <td class="detail-col">AI-ESS技術手冊、教育訓練、售後服務</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>© 2026 GOLD NEWTON INDUSTRIAL</footer>
+    </div>
 
     <script>
-        // 內建員工工號與姓名對照表
-        const EMPLOYEE_LIST = [
-            { id: "E001", name: "李彥綸" },
-            { id: "E002", name: "楊添仰" },
-            { id: "E003", name: "陳品鈞" },
-            { id: "E005", name: "陳秀燕" },
-            { id: "E006", name: "高欣宜" },
-            { id: "E011", name: "余品橋" },
-            { id: "E012", name: "陳慧真" },
-            { id: "E020", name: "ERIC" },
-            { id: "E023", name: "陳靖昂" },
-            { id: "E026", name: "何成偉" },
-            { id: "E029", name: "李佩娟" },
-            { id: "E033", name: "曾晨杰" },
-            { id: "E035", name: "戴政宏" },
-            { id: "E036", name: "詹淑敏" }
-        ];
+        const SALES_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pub?gid=0&single=true&output=csv&t=" + Date.now();
+        const EXP_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWoViZ8oexk0ZDVaXPcbxplYRiadGzvcF0nM_dI0iSpVQUqCpgJeCFCIfWKX60De_YcN_xmkreBZUx/pub?gid=1915259935&single=true&output=csv&t=" + Date.now();
+        
+        // 工作日誌寫入 Google Sheet 用的 Apps Script 網址
+        const WORKLOG_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyf5ysSbBQEXvUAVIBoGyj4XqCtNDV9qeMZtJNXYBTiwfsn-3ju2bLWHq1CyzyAC2jcQg/exec';
 
-        // 初始化檢查登入狀態
-        function checkAuthStatus() {
-            const isAuth = localStorage.getItem('king_newton_auth');
-            if (isAuth === 'true') {
-                document.getElementById('auth-modal').style.display = 'none';
+        document.getElementById('auth-input').addEventListener('input', function() {
+            const date = new Date();
+            const correctPw = date.getFullYear() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0');
+            if (this.value === correctPw) document.getElementById('auth-overlay').style.display = 'none';
+        });
+
+        // 工作日誌彈窗控制與自動帶入個人資訊
+        function openWorklogModal() {
+            const dateInput = document.getElementById('wlDate');
+            if (!dateInput.value) {
+                const d = new Date();
+                dateInput.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+            // 自動讀取本地記憶的工號與姓名
+            const savedEmpId = localStorage.getItem('kn_emp_id');
+            const savedEmpName = localStorage.getItem('kn_emp_name');
+            if (savedEmpId) document.getElementById('wlEmpId').value = savedEmpId;
+            if (savedEmpName) document.getElementById('wlEmpName').value = savedEmpName;
+
+            document.getElementById('worklogModal').classList.add('show');
+        }
+
+        function closeWorklogModal() {
+            document.getElementById('worklogModal').classList.remove('show');
+        }
+
+        async function submitWorklog(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('wlSubmitBtn');
+            const empId = document.getElementById('wlEmpId').value.trim();
+            const empName = document.getElementById('wlEmpName').value.trim();
+
+            const payload = {
+                action: 'addWorklog',
+                date: document.getElementById('wlDate').value.trim(),
+                category: document.getElementById('wlCategory').value.trim(),
+                content: document.getElementById('wlContent').value.trim(),
+                empId: empId,
+                empName: empName
+            };
+
+            // 儲存資訊至瀏覽器記憶體，下次自動帶入
+            localStorage.setItem('kn_emp_id', empId);
+            localStorage.setItem('kn_emp_name', empName);
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '傳送中...';
+
+            try {
+                await fetch(WORKLOG_GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                alert('工作日誌已成功寫入 Google Sheet！');
+                document.getElementById('wlContent').value = '';
+                closeWorklogModal();
+            } catch (err) {
+                console.error('傳送日誌失敗', err);
+                alert('傳送失敗，請檢查網路連線。');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送出日誌';
             }
         }
 
-        // 本地前端立即驗證工號與姓名
-        function verifyEmp(e) {
-            e.preventDefault();
-            const inputId = document.getElementById('emp-id-input').value.trim().toUpperCase();
-            const inputName = document.getElementById('emp-name-input').value.trim().toUpperCase();
-            const msgDiv = document.getElementById('auth-msg');
+        function fetchAll() {
+            Papa.parse(EXP_URL, {
+                download: true, header: false, skipEmptyLines: true,
+                complete: function(res) {
+                    let exp = 0;
+                    if (res.data) {
+                        outer: for (let row of res.data) {
+                            for (let cell of row) {
+                                let v = cell?.toString().replace(/[^0-9.]/g, '').trim();
+                                if (v !== "" && !isNaN(parseFloat(v))) { exp = parseFloat(v); break outer; }
+                            }
+                        }
+                    }
+                    document.getElementById('expense-val').innerText = Math.round(exp).toLocaleString();
+                    fetchSales();
+                }
+            });
+        }
 
-            if (!inputId || !inputName) {
-                msgDiv.innerText = "請完整輸入工號與姓名！";
-                return;
-            }
+        function fetchSales() {
+            Papa.parse(SALES_URL, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: function(res) {
+                    let s = 0, p = 0;
+                    res.data.forEach(row => {
+                        s += parseFloat(row['本幣未稅金額']?.toString().replace(/,/g, '')) || 0;
+                        p += parseFloat(row['毛利']?.toString().replace(/,/g, '')) || 0;
+                    });
+                    document.getElementById('total-sales').innerText = Math.round(s).toLocaleString();
+                    document.getElementById('total-profit').innerText = Math.round(p).toLocaleString();
+                    const timeNow = new Date();
+                    document.getElementById('update-time').innerText = "最後同步時間：" + timeNow.toLocaleTimeString();
+                    calculateLogic(s, p);
+                }
+            });
+        }
 
-            const matchedEmp = EMPLOYEE_LIST.find(emp => 
-                emp.id.toUpperCase() === inputId && emp.name.toUpperCase() === inputName
-            );
-
-            if (matchedEmp) {
-                localStorage.setItem('king_newton_auth', 'true');
-                localStorage.setItem('king_newton_emp_id', matchedEmp.id);
-                localStorage.setItem('king_newton_emp_name', matchedEmp.name);
-                document.getElementById('auth-modal').style.display = 'none';
+        function calculateLogic(s, p) {
+            const dateObj = new Date();
+            const start = new Date(dateObj.getFullYear(), 0, 0);
+            const dayOfYear = Math.floor((dateObj - start) / 86400000);
+            document.getElementById('day-info').innerText = `${dateObj.getFullYear()}年第 ${dayOfYear} 天`;
+            let monthly = parseFloat(document.getElementById('monthly-target').value.replace(/,/g, '')) || 0;
+            let annual = monthly * 12;
+            document.getElementById('annual-target').innerText = Math.round(annual).toLocaleString();
+            if (s === undefined) s = parseFloat(document.getElementById('total-sales').innerText.replace(/,/g, '')) || 0;
+            let timeWeightedTarget = (annual / 365) * dayOfYear;
+            let diff = s - timeWeightedTarget;
+            let progEl = document.getElementById('progress-status');
+            let labelEl = document.getElementById('diff-label');
+            progEl.innerText = Math.round(Math.abs(diff)).toLocaleString();
+            if (diff >= 0) {
+                progEl.style.color = '#4ade80';
+                labelEl.innerText = '進度超前 (+)';
             } else {
-                msgDiv.innerText = "❌ 工號與姓名不符，請重新輸入！";
-                document.getElementById('emp-id-input').value = "";
-                document.getElementById('emp-name-input').value = "";
+                progEl.style.color = '#fb7185';
+                labelEl.innerText = '進度落後 (-)';
             }
+            let exp = parseFloat(document.getElementById('expense-val').innerText.replace(/,/g, '')) || 0;
+            document.getElementById('rate-achieve').innerText = annual > 0 ? `${(s/annual*100).toFixed(1)}%` : '0%';
+            document.getElementById('rate-margin').innerText = s > 0 ? `${(p/s*100).toFixed(1)}%` : '0%';
+            document.getElementById('rate-expense').innerText = s > 0 ? `${(exp/s*100).toFixed(1)}%` : '0%';
         }
 
-        // 主動點擊 EXIT 按鈕登出
-        function logoutSystem() {
-            if (confirm("確定要登出系統並清除目前的登入身分嗎？")) {
-                localStorage.removeItem('king_newton_auth');
-                localStorage.removeItem('king_newton_emp_id');
-                localStorage.removeItem('king_newton_emp_name');
-                location.reload();
-            }
+        function formatCommas(i) { 
+            let v = parseFloat(i.value.replace(/[^0-9.]/g, '')); 
+            if(!isNaN(v)) i.value = v.toLocaleString(); 
         }
 
-        // 長按頂部 LOGO 2 秒清除登入紀錄並重整
-        let pressTimer = null;
-        const logoutTrigger = document.getElementById('logout-trigger');
-
-        const startPress = () => {
-            pressTimer = setTimeout(() => {
-                logoutSystem();
-            }, 2000); // 2秒
-        };
-
-        const cancelPress = () => {
-            clearTimeout(pressTimer);
-        };
-
-        logoutTrigger.addEventListener('mousedown', startPress);
-        logoutTrigger.addEventListener('touchstart', startPress);
-        logoutTrigger.addEventListener('mouseup', cancelPress);
-        logoutTrigger.addEventListener('mouseleave', cancelPress);
-        logoutTrigger.addEventListener('touchend', cancelPress);
-
-        checkAuthStatus();
+        window.onload = fetchAll;
     </script>
 </body>
 </html>
