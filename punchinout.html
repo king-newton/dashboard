@@ -89,20 +89,12 @@
         .loc-btn:hover {
             background: #218838;
         }
-        .sheet-btn {
-            background: #ffc107;
-            color: #333;
-            text-decoration: none;
-            display: block;
-            text-align: center;
-            padding: 12px 20px;
-            border-radius: 6px;
+        .query-btn {
+            background: #17a2b8;
             font-weight: bold;
-            font-size: 16px;
-            margin-top: 10px;
         }
-        .sheet-btn:hover {
-            background: #e0a800;
+        .query-btn:hover {
+            background: #138496;
         }
         #locationText { 
             font-size: 14px; 
@@ -119,6 +111,45 @@
             color: #28a745; 
             font-weight: bold; 
             text-align: center; 
+        }
+        .records-area {
+            margin-top: 16px;
+            text-align: left;
+        }
+        .record-item {
+            border: 1px solid #e9ecef;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .record-badge {
+            background: #e7f1ff;
+            color: #0056b3;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+        .record-loc {
+            color: #555;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        .empty-hint {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            padding: 12px 0;
         }
     </style>
 </head>
@@ -165,16 +196,17 @@
     </form>
 </div>
 
-<!-- 主管/全員即時總表按鈕專區 -->
+<!-- 個人出勤紀錄查詢專區 -->
 <div class="card" style="text-align: center;">
-    <h3 style="margin-top: 0; color: #333; font-size: 18px;">📋 出勤紀錄查詢</h3>
-    <p style="font-size: 14px; color: #666;">點擊下方按鈕即可隨時在新視窗查看出勤總表線上檢視：</p>
-    <a href="https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/edit?usp=sharing" target="_blank" class="sheet-btn">
-        📋 開啟即時出勤總表線上檢視
-    </a>
+    <h3 style="margin-top: 0; color: #333; font-size: 18px;">📋 個人出勤紀錄查詢</h3>
+    <button type="button" class="query-btn" onclick="fetchMyRecords()">🔍 查詢我的打卡紀錄</button>
+    <div id="myRecordsArea" class="records-area"></div>
 </div>
 
 <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxGzLW4QUO3DCSSoTtEhosM8bmAigYN7rSpdirkmU9BrQdkxQX2KA7-UvCepSiS1KHDsQ/exec';
+    let hasQueriedRecords = false;
+
     // 頁面載入時自動檢查登入狀態並帶入姓名
     window.addEventListener('DOMContentLoaded', () => {
         const loggedInName = localStorage.getItem('king_newton_emp_name');
@@ -258,6 +290,86 @@
         }
     }
 
+    // 查詢登入者個人的打卡紀錄
+    async function fetchMyRecords() {
+        const empName = document.getElementById("empName").value;
+        const container = document.getElementById("myRecordsArea");
+        hasQueriedRecords = true;
+
+        if (!empName) {
+            container.innerHTML = `<div class="empty-hint">⚠️ 找不到登入者姓名，請重新登入。</div>`;
+            return;
+        }
+
+        container.innerHTML = `<div class="empty-hint">⏳ 正在查詢「${escapeHtml(empName)}」的打卡紀錄...</div>`;
+
+        try {
+            const url = `${scriptURL}?action=myRecords&name=${encodeURIComponent(empName)}&_t=${Date.now()}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            const rawList = Array.isArray(data)
+                ? data
+                : (Array.isArray(data.records) ? data.records : []);
+
+            // 再次在前端過濾出符合登入者姓名的紀錄，避免後端回傳整份資料
+            const mine = rawList
+                .filter(row => String(row.name || '').trim() === String(empName).trim())
+                .reverse(); // 最新一筆排在最上面
+
+            renderMyRecords(mine, empName);
+        } catch (err) {
+            console.error('Query error:', err);
+            container.innerHTML = `
+                <div class="empty-hint">
+                    ⚠️ 無法讀取個人紀錄，請確認 Google Apps Script 已支援 <code>doGet</code> 並開放存取權限。
+                </div>
+            `;
+        }
+    }
+
+    // 渲染個人打卡紀錄列表
+    function renderMyRecords(records, empName) {
+        const container = document.getElementById("myRecordsArea");
+
+        if (!records.length) {
+            container.innerHTML = `<div class="empty-hint">查無「${escapeHtml(empName)}」的打卡紀錄。</div>`;
+            return;
+        }
+
+        // 預設顯示最近 10 筆，方便快速確認剛剛打卡結果
+        const recent = records.slice(0, 10);
+
+        container.innerHTML = recent.map(item => {
+            const timeText = escapeHtml(item.time || '未記錄時間');
+            const statusText = escapeHtml(item.status || '未註明狀態');
+            const locText = escapeHtml(item.location || '未記錄位置');
+
+            return `
+                <div class="record-item">
+                    <div class="record-header">
+                        <span>🕒 ${timeText}</span>
+                        <span class="record-badge">${statusText}</span>
+                    </div>
+                    <div class="record-loc">📍 ${locText}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 防止特殊字元造成 XSS
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // 表單送出事件
     document.getElementById("checkinForm").addEventListener("submit", function(e) {
         e.preventDefault();
@@ -278,8 +390,6 @@
             location: currentAddress || currentCoords
         };
 
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxGzLW4QUO3DCSSoTtEhosM8bmAigYN7rSpdirkmU9BrQdkxQX2KA7-UvCepSiS1KHDsQ/exec';
-
         document.getElementById("status").innerText = "正在傳送資料至雲端...";
 
         fetch(scriptURL, {
@@ -292,13 +402,10 @@
         })
         .then(response => {
             document.getElementById("status").innerText = "🎉 送出成功！資料已存入雲端試算表。";
-            
-            // 送出成功後自動開啟線上出勤總表檢視[cite: 2]
-            window.open('https://docs.google.com/spreadsheets/d/1dwedE1cB0-UaO3C8pp6hw2nPVex2o0pXDZaffzoiTuc/edit?usp=sharing', '_blank');
 
             document.getElementById("checkinForm").reset();
             
-            // 重新將登入者姓名回填（因為表單 reset 會清空欄位）[cite: 2]
+            // 重新將登入者姓名回填（因為表單 reset 會清空欄位）
             const loggedInName = localStorage.getItem('king_newton_emp_name');
             document.getElementById('empNameDisplay').value = loggedInName;
             document.getElementById('empName').value = loggedInName;
@@ -306,6 +413,13 @@
             document.getElementById("locationText").innerText = "尚未取得位置";
             currentAddress = "";
             currentCoords = "";
+
+            // 若下方已經查詢過紀錄，延遲 1.5 秒自動刷新一次，方便確認剛送出的那一筆
+            if (hasQueriedRecords) {
+                setTimeout(() => {
+                    fetchMyRecords();
+                }, 1500);
+            }
         })
         .catch(error => {
             console.error('Error!', error);
